@@ -1,6 +1,6 @@
 {
   "name": "com.jeomseon.unity.safe-area",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "displayName": "Jeomseon Unity Safe Area",
   "description": "Safe-area layout components, runtime canvas patching, and editor preview tools for Unity UI.",
   "unity": "2022.3",
