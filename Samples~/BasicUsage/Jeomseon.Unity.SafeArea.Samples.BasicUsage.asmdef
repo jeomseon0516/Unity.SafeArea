@@ -1,5 +1,6 @@
 {
   "name": "Jeomseon.Unity.SafeArea.Samples.BasicUsage",
+  "rootNamespace": "Jeomseon.Samples.SafeArea",
   "references": [
     "Jeomseon.Unity.SafeArea"
   ]
