@@ -1,5 +1,9 @@
 # 변경 기록
 
+## [0.1.1] - 2026-07-29
+
+- Safe Area 인셋 계산을 확인하는 `Basic Usage` 샘플을 추가했습니다.
+
 ## [Unreleased]
 
 - TODO: Unity Device Simulator와 자체 프리뷰 창의 역할을 비교하고 통합 여부를 결정합니다.

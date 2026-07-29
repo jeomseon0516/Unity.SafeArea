@@ -1,6 +1,6 @@
 {
   "name": "com.jeomseon.unity.safe-area",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "displayName": "Jeomseon Unity Safe Area",
   "description": "Safe-area layout components, runtime canvas patching, and editor preview tools for Unity UI.",
   "unity": "2022.3",
@@ -12,10 +12,22 @@
     "name": "jeomseon0516",
     "url": "https://github.com/jeomseon0516"
   },
-  "keywords": ["jeomseon", "safe-area", "ui", "mobile"],
+  "keywords": [
+    "jeomseon",
+    "safe-area",
+    "ui",
+    "mobile"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/jeomseon0516/Unity.SafeArea.git"
-  }
+  },
+  "samples": [
+    {
+      "displayName": "Basic Usage",
+      "description": "패키지 핵심 API를 확인하는 최소 사용 예제입니다.",
+      "path": "Samples~/BasicUsage"
+    }
+  ]
 }

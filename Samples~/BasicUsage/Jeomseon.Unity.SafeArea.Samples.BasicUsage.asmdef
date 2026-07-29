@@ -1,0 +1,6 @@
+{
+  "name": "Jeomseon.Unity.SafeArea.Samples.BasicUsage",
+  "references": [
+    "Jeomseon.Unity.SafeArea"
+  ]
+}
