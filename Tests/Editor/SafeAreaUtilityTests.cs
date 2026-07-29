@@ -6,7 +6,7 @@ namespace Jeomseon.SafeArea.Tests
     public sealed class SafeAreaUtilityTests
     {
         [Test]
-        public void GetInsets_화면과안전영역으로각방향여백을계산한다()
+        public void GetInsets_CalculatesInsetsFromScreenAndSafeArea()
         {
             SafeAreaUtility.GetInsets(
                 new Rect(10f, 20f, 970f, 1920f),
