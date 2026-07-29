@@ -1,0 +1,6 @@
+{
+  "name": "Jeomseon.Unity.SafeArea",
+  "rootNamespace": "Jeomseon.SafeArea",
+  "references": ["UnityEngine.UI"],
+  "noEngineReferences": false
+}

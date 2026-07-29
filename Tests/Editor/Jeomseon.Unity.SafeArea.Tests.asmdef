@@ -1,0 +1,11 @@
+{
+  "name": "Jeomseon.Unity.SafeArea.Tests",
+  "rootNamespace": "Jeomseon.SafeArea.Tests",
+  "references": [
+    "Jeomseon.Unity.SafeArea"
+  ],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": false,
+  "noEngineReferences": false
+}

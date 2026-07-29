@@ -1,0 +1,21 @@
+{
+  "name": "com.jeomseon.unity.safe-area",
+  "version": "0.1.0",
+  "displayName": "Jeomseon Unity Safe Area",
+  "description": "Safe-area layout components, runtime canvas patching, and editor preview tools for Unity UI.",
+  "unity": "2022.3",
+  "dependencies": {
+    "com.unity.ugui": "1.0.0",
+    "com.unity.modules.ui": "1.0.0"
+  },
+  "author": {
+    "name": "jeomseon0516",
+    "url": "https://github.com/jeomseon0516"
+  },
+  "keywords": ["jeomseon", "safe-area", "ui", "mobile"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jeomseon0516/Unity.SafeArea.git"
+  }
+}

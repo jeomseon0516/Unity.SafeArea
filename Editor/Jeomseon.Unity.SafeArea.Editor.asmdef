@@ -1,0 +1,11 @@
+{
+  "name": "Jeomseon.Unity.SafeArea.Editor",
+  "rootNamespace": "Jeomseon.SafeAreaEditor",
+  "references": [
+    "Jeomseon.Unity.SafeArea",
+    "UnityEngine.UI"
+  ],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": true,
+  "noEngineReferences": false
+}
