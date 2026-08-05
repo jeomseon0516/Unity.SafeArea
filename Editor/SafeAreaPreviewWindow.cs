@@ -12,10 +12,6 @@ namespace Jeomseon.SafeAreaEditor
 {
     public class SafeAreaPreviewWindow : EditorWindow
     {
-        // TODO(api): Unity Device Simulator가 화면 크기와 Safe Area 시뮬레이션을 제공하므로,
-        // 자체 PreviewScene 렌더링을 유지할지 Device Simulator 연동으로 대체할지 비교합니다.
-        // ----- Override용 값 (사용자가 편집하는 값) -----
-        // Override ON 일 때만 실제 프리뷰에 사용됨
         private bool _overrideEnabled = false; // 기본은 OFF
         private Rect _overrideSafeArea;
         private Vector2 _overrideScreenSize = new Vector2(1080, 1920);
@@ -247,6 +243,9 @@ namespace Jeomseon.SafeAreaEditor
         //  PreviewScene 구축/해제
         // =====================================================================
 
+        /* TODO(P3-01, api): Unity Device Simulator가 화면 크기와 Safe Area 시뮬레이션을 제공하므로,
+         * 자체 PreviewScene 렌더링을 유지할지 Device Simulator 연동으로 대체할지 비교합니다.
+         */
         private void CreatePreviewScene()
         {
             if (_previewScene.IsValid())
