@@ -15,11 +15,9 @@ namespace Jeomseon.SafeArea
     /// </summary>
     public static class SafeAreaWatcher
     {
-        // TODO(lifecycle): Domain Reload를 끈 Enter Play Mode에서도 정적 이벤트와 초기화 상태가
-        // 이전 실행에서 남지 않도록 SubsystemRegistration 단계의 초기화를 추가합니다.
         /// <summary>
-        /// SafeArea 또는 화면 크기가 변경되었을 때 호출되는 이벤트.
-        /// Rect 인자는 새 SafeArea 값(Screen 좌표 기준, px).
+        /// SafeArea 또는 화면 크기가 변경되었을 때 호출되는 이벤트입니다.
+        /// Rect 인자는 새 SafeArea 값(Screen 좌표 기준, px)입니다.
         /// </summary>
         public static event Action<Rect> SafeAreaChanged;
 
@@ -28,6 +26,9 @@ namespace Jeomseon.SafeArea
         private static Vector2 _lastScreenSize;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        /* TODO(P0-01, lifecycle): Domain Reload를 끈 Enter Play Mode에서도 정적 이벤트와 초기화 상태가
+         * 이전 실행에서 남지 않도록 SubsystemRegistration 단계의 초기화를 추가합니다.
+         */
         private static void InitOnPlay()
         {
             InitInternal();

@@ -16,6 +16,10 @@ namespace Jeomseon.SafeArea
         /// 주어진 Canvas를 SafeAreaRoot로 감싸고, SafeAreaRoot 컴포넌트를 부착한다.
         /// 이미 패치되어 있으면 그대로 두고 기존 SafeAreaRoot를 반환.
         /// </summary>
+        /* TODO(P1-02, editor-settings): 고정된 root 이름과 제외 태그, World Space 처리,
+         * 자식 재배치 정책을 SafeAreaSettings ScriptableObject 또는 Project Settings로 노출합니다.
+         * Custom Inspector에서 적용 대상을 미리 확인하고 씬 변경 전 Undo와 preview를 지원합니다.
+         */
         public static GameObject EnsureSafeAreaRoot(Canvas canvas)
         {
             if (canvas == null)
