@@ -30,7 +30,7 @@ namespace Jeomseon.SafeArea
         /// </summary>
         public static void ApplyToAllCanvases()
         {
-            var canvases = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var canvases = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include);
             foreach (var canvas in canvases)
             {
                 SafeAreaPatchCore.EnsureSafeAreaRoot(canvas);

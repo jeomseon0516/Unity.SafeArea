@@ -1,5 +1,12 @@
 # 변경 기록
 
+## [0.1.5] - 2026-08-10
+
+- `SafeAreaRuntimeApplier.ApplyToAllCanvases()`가 Unity 6000.5에서 obsolete된
+  `Object.FindObjectsByType<Canvas>(FindObjectsInactive, FindObjectsSortMode)` 오버로드를
+  사용하던 것을 `FindObjectsByType<Canvas>(FindObjectsInactive.Include)`로 교체했습니다.
+  공개 API 변경은 없습니다.
+
 ## [0.1.3] - 2026-07-29
 
 - Samples 어셈블리의 `rootNamespace`를 샘플 namespace에 맞게 정리했습니다.
