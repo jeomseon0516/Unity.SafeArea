@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Serialization;
 
 namespace Jeomseon.SafeArea
 {
@@ -13,10 +14,10 @@ namespace Jeomseon.SafeArea
     [RequireComponent(typeof(LayoutGroup))]
     public sealed class SafeAreaPadding : MonoBehaviour
     {
-        [SerializeField] private bool _useLeft;
-        [SerializeField] private bool _useRight;
-        [SerializeField] private bool _useTop = true;
-        [SerializeField] private bool _useBottom;
+        [SerializeField, FormerlySerializedAs("_useLeft")] private bool useLeft;
+        [SerializeField, FormerlySerializedAs("_useRight")] private bool useRight;
+        [SerializeField, FormerlySerializedAs("_useTop")] private bool useTop = true;
+        [SerializeField, FormerlySerializedAs("_useBottom")] private bool useBottom;
 
         private LayoutGroup _layoutGroup;
         private RectOffset _originalPadding;
@@ -105,13 +106,13 @@ namespace Jeomseon.SafeArea
             int padTop = _originalPadding.top;
             int padBottom = _originalPadding.bottom;
 
-            if (_useLeft)
+            if (useLeft)
                 padLeft = _originalPadding.left + Mathf.RoundToInt(left / scaleFactor);
-            if (_useRight)
+            if (useRight)
                 padRight = _originalPadding.right + Mathf.RoundToInt(right / scaleFactor);
-            if (_useTop)
+            if (useTop)
                 padTop = _originalPadding.top + Mathf.RoundToInt(top / scaleFactor);
-            if (_useBottom)
+            if (useBottom)
                 padBottom = _originalPadding.bottom + Mathf.RoundToInt(bottom / scaleFactor);
 
             _layoutGroup.padding.left = padLeft;
