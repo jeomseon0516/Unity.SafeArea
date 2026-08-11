@@ -1,5 +1,13 @@
 # 변경 기록
 
+## [Unreleased]
+
+## [0.1.6] - 2026-08-11
+
+- 워크스페이스 명명 규칙에 맞춰 `SafeAreaPadding`·`SafeAreaRoot`의 `[SerializeField] private`
+  필드를 `_camelCase`에서 `camelCase`로 정리하고 기존 이름을 `[FormerlySerializedAs]`로
+  보존했습니다. 공개 API 변경은 없으며 기존 Scene·Prefab의 직렬화된 값은 그대로 유지됩니다.
+
 ## [0.1.5] - 2026-08-10
 
 - `SafeAreaRuntimeApplier.ApplyToAllCanvases()`가 Unity 6000.5에서 obsolete된

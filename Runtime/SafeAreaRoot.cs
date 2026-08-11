@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Jeomseon.SafeArea
 {
@@ -11,10 +12,10 @@ namespace Jeomseon.SafeArea
     [RequireComponent(typeof(RectTransform))]
     public sealed class SafeAreaRoot : MonoBehaviour
     {
-        [SerializeField] private bool _applyLeft = true;
-        [SerializeField] private bool _applyRight = true;
-        [SerializeField] private bool _applyTop = true;
-        [SerializeField] private bool _applyBottom = true;
+        [SerializeField, FormerlySerializedAs("_applyLeft")] private bool applyLeft = true;
+        [SerializeField, FormerlySerializedAs("_applyRight")] private bool applyRight = true;
+        [SerializeField, FormerlySerializedAs("_applyTop")] private bool applyTop = true;
+        [SerializeField, FormerlySerializedAs("_applyBottom")] private bool applyBottom = true;
 
         private RectTransform _rectTransform;
 
@@ -100,13 +101,13 @@ namespace Jeomseon.SafeArea
             float yMin = 0f;
             float yMax = screenSize.y;
 
-            if (_applyLeft)
+            if (applyLeft)
                 xMin = left;
-            if (_applyRight)
+            if (applyRight)
                 xMax = screenSize.x - right;
-            if (_applyBottom)
+            if (applyBottom)
                 yMin = bottom;
-            if (_applyTop)
+            if (applyTop)
                 yMax = screenSize.y - top;
 
             Rect target = Rect.MinMaxRect(xMin, yMin, xMax, yMax);
