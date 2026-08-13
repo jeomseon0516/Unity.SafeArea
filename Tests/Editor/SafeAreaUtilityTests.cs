@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using UnityEngine;
+using Jeomseon.Unity.SafeArea;
 
 namespace Jeomseon.SafeArea.Tests
 {

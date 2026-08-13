@@ -2,7 +2,7 @@
 using UnityEngine;
 using System;
 
-namespace Jeomseon.SafeArea
+namespace Jeomseon.Unity.SafeArea
 {
     /// <summary>
     /// Static watcher for safe area / screen size changes.
