@@ -1,6 +1,6 @@
 {
   "name": "Jeomseon.Unity.SafeArea.Editor",
-  "rootNamespace": "Jeomseon.Unity.SafeArea",
+  "rootNamespace": "Jeomseon.Unity.SafeArea.Editor",
   "references": [
     "Jeomseon.Unity.SafeArea",
     "UnityEngine.UI"
