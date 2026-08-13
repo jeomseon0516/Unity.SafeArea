@@ -50,6 +50,16 @@
   영구패치(`SafeAreaScenePatcher`)·Preview 임시패치(`SafeAreaPreviewWindow`)가 동일한 정책을 공유하면서도
   필요하면 서로 다르게 구성할 수 있습니다.
 - `SafeAreaPreviewWindow`에 남아있던 디버그용 `Debug.Log("Enable!")` 호출을 제거했습니다.
+- **(P0-01)** `SafeAreaWatcher`에 `RuntimeInitializeLoadType.SubsystemRegistration` 단계의
+  `ResetStaticStateForNewSession()`을 추가해, Domain Reload를 끈 Enter Play Mode에서도 매 세션마다
+  이전 실행의 정적 이벤트 구독자·초기화 플래그·캐시값이 남지 않도록 했습니다.
+- `SafeAreaPadding._originalPadding`이 최초 1회만 캐싱되어 사용자가 Inspector에서 `LayoutGroup.padding`을
+  직접 편집해도 다음 SafeArea 갱신 시 되돌아가던 버그를 수정했습니다. 마지막 적용값과 현재값의
+  차이를 원본 기준선에 반영하는 방식으로 재설계했습니다. `ApplyPadding`에 누락돼 있던
+  `Undo.RecordObject`/`EditorUtility.SetDirty` 호출도 추가했습니다.
+- **(P1-03)** UI Toolkit 지원 `SafeAreaVisualElementPadding`(`Jeomseon.Unity.SafeArea.UIToolkit`)을
+  추가했습니다. 기존 `SafeAreaRoot`/`SafeAreaPadding`은 `RectTransform`/`LayoutGroup` 기반 uGUI
+  전용으로 계속 유지하며, `UIDocument`를 쓰는 프로젝트는 새 컴포넌트를 사용합니다.
 - TODO: Unity Device Simulator와 자체 프리뷰 창의 역할을 비교하고 통합 여부를 결정합니다.
 - TODO: 안전 영역 갱신 이벤트의 정적 수명과 Enter Play Mode Options 호환성을 검토합니다.
 - TODO: 자식 재배치 정책(현재는 항상 Canvas의 모든 자식을 이동)을 `SafeAreaSettings`로 추가 노출하고,
