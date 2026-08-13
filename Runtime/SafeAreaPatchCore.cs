@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Jeomseon.SafeArea
+namespace Jeomseon.Unity.SafeArea
 {
     /// <summary>
     /// Canvas 아래를 SafeAreaRoot로 감싸는 공통 로직.

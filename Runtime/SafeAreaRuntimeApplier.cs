@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace Jeomseon.SafeArea
+namespace Jeomseon.Unity.SafeArea
 {
     /// <summary>
     /// 런타임에만 Canvas들을 SafeAreaRoot로 감싸는 자동 패처.

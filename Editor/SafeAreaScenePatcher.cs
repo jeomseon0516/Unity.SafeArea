@@ -4,9 +4,9 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
-using Jeomseon.SafeArea;
+using Jeomseon.Unity.SafeArea;
 
-namespace Jeomseon.SafeAreaEditor
+namespace Jeomseon.Unity.SafeArea.Editor
 {
     /// <summary>
     /// 에디터에서 실제 씬에 SafeAreaRoot를 붙여주는 Patcher.

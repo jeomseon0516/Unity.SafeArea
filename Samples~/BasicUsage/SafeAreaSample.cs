@@ -1,4 +1,4 @@
-using Jeomseon.SafeArea;
+using Jeomseon.Unity.SafeArea;
 using UnityEngine;
 
 namespace Jeomseon.Samples.SafeArea

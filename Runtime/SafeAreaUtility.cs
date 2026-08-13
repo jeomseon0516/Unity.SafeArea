@@ -1,7 +1,7 @@
 // Assets/Jeomseon/SafeArea/Runtime/SafeAreaUtility.cs
 using UnityEngine;
 
-namespace Jeomseon.SafeArea
+namespace Jeomseon.Unity.SafeArea
 {
     /// <summary>
     /// Centralized access to Safe Area and screen size.

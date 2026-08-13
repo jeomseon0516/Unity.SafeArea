@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Serialization;
 
-namespace Jeomseon.SafeArea
+namespace Jeomseon.Unity.SafeArea
 {
     /// <summary>
     /// LayoutGroup의 padding에 Safe Area 인셋을 더해주는 컴포넌트.
