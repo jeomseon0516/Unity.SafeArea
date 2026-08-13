@@ -1,6 +1,10 @@
 # 변경 기록
 
-## [Unreleased]
+## [0.2.0] - 2026-08-13
+
+- **(Breaking)** Runtime/Editor 네임스페이스를 패키지 규칙에 맞춰
+  `Jeomseon.Unity.SafeArea`와 `Jeomseon.Unity.SafeArea.Editor`로 변경했습니다. 이전
+  `Jeomseon.SafeArea`/`Jeomseon.SafeAreaEditor` 호환 별칭은 제공하지 않습니다.
 
 ## [0.1.6] - 2026-08-11
 

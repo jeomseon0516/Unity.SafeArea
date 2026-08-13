@@ -6,9 +6,9 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using Jeomseon.SafeArea;
+using Jeomseon.Unity.SafeArea;
 
-namespace Jeomseon.SafeAreaEditor
+namespace Jeomseon.Unity.SafeArea.Editor
 {
     public class SafeAreaPreviewWindow : EditorWindow
     {
