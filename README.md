@@ -1,6 +1,7 @@
 # Jeomseon Unity Safe Area
 
-모바일 화면의 안전 영역을 uGUI 레이아웃에 적용하고 에디터에서 미리 볼 수 있게 하는 UPM 패키지입니다.
+모바일 화면의 안전 영역을 uGUI/UI Toolkit 레이아웃에 적용하고 에디터에서 미리 볼 수 있게 하는 UPM
+패키지입니다.
 
 ## 설치
 
@@ -11,6 +12,8 @@ https://github.com/jeomseon0516/Unity.SafeArea.git#v0.1.2
 ```
 
 ## 구성
+
+### uGUI
 
 - `SafeAreaRoot`: `RectTransform` 앵커에 안전 영역 적용
 - `SafeAreaPadding`: `LayoutGroup.padding`에 안전 영역 여백 추가
@@ -23,4 +26,18 @@ https://github.com/jeomseon0516/Unity.SafeArea.git#v0.1.2
   가능합니다.
 - `SafeAreaPreviewWindow`: 에디터 프리뷰
 
-Unity의 `Screen.safeArea`를 기반으로 동작합니다. Device Simulator가 제공하는 화면 시뮬레이션과 역할이 겹치는 프리뷰 부분은 향후 통합 여부를 검토합니다.
+### UI Toolkit
+
+- `SafeAreaVisualElementPadding`(`Jeomseon.Unity.SafeArea.UIToolkit`): `UIDocument`가 붙은
+  GameObject에 부착합니다. 지정한 `VisualElement`(비우면 `rootVisualElement`)의 padding에 안전
+  영역 인셋을 더합니다. `RectTransform`/`LayoutGroup`이 없는 UI Toolkit에는 anchor 개념 자체가 없어,
+  이 컴포넌트 하나로 "화면 전체를 안쪽으로 밀기"(전 방향 사용)와 "가장자리 일부만 밀기"(예: 상단
+  헤더만)를 모두 표현합니다. `SafeAreaRoot`/`SafeAreaPadding`처럼 Inspector에서 편집한 값을 그대로
+  두는 대신, 베이스 padding(`basePaddingLeft/Right/Top/Bottom`)을 직접 필드로 받아 안전 영역 인셋과
+  합산합니다.
+
+두 계열 모두 같은 `SafeAreaUtility`/`SafeAreaWatcher`(Runtime, `Screen.safeArea` 기반)를 공유합니다.
+uGUI용 API는 `RectTransform`/`LayoutGroup`이 필요해 UI Toolkit에는 적용되지 않으므로, UI Toolkit
+프로젝트는 `SafeAreaVisualElementPadding`을 사용해야 합니다.
+
+Device Simulator가 제공하는 화면 시뮬레이션과 역할이 겹치는 프리뷰 부분은 향후 통합 여부를 검토합니다.

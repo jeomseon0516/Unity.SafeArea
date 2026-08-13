@@ -25,10 +25,23 @@ namespace Jeomseon.Unity.SafeArea
         private static Rect _lastSafeArea;
         private static Vector2 _lastScreenSize;
 
+        /// <summary>
+        /// Domain Reload를 끈 Enter Play Mode에서도 매 Play 세션 진입 시 무조건 실행됩니다(static 필드
+        /// 초기화와 달리 <see cref="RuntimeInitializeOnLoadMethod"/> 메서드는 Domain Reload 여부와
+        /// 무관하게 항상 재실행됨). 이전 세션에서 남은 구독자·초기화 플래그·캐시값을 전부 지워
+        /// <see cref="InitOnPlay"/>가 이번 세션 기준으로 다시 초기화하도록 보장합니다.
+        /// </summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        internal static void ResetStaticStateForNewSession()
+        {
+            Application.onBeforeRender -= CheckForChanges;
+            SafeAreaChanged = null;
+            _initialized = false;
+            _lastSafeArea = default;
+            _lastScreenSize = default;
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        /* TODO(P0-01, lifecycle): Domain Reload를 끈 Enter Play Mode에서도 정적 이벤트와 초기화 상태가
-         * 이전 실행에서 남지 않도록 SubsystemRegistration 단계의 초기화를 추가합니다.
-         */
         private static void InitOnPlay()
         {
             InitInternal();

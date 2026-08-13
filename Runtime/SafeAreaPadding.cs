@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Serialization;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Jeomseon.Unity.SafeArea
 {
@@ -21,6 +24,7 @@ namespace Jeomseon.Unity.SafeArea
 
         private LayoutGroup _layoutGroup;
         private RectOffset _originalPadding;
+        private RectOffset _lastAppliedPadding;
         private Canvas _canvas;
         private bool _initializedOriginal;
 
@@ -36,16 +40,35 @@ namespace Jeomseon.Unity.SafeArea
             if (_layoutGroup == null)
                 _layoutGroup = GetComponent<LayoutGroup>();
 
-            if (_layoutGroup != null && !_initializedOriginal)
+            if (_layoutGroup == null)
+                return;
+
+            var current = _layoutGroup.padding;
+
+            if (!_initializedOriginal)
+            {
+                _originalPadding = new RectOffset(current.left, current.right, current.top, current.bottom);
+                _initializedOriginal = true;
+                return;
+            }
+
+            // 마지막으로 이 컴포넌트가 적용한 값과 현재 값이 다르면, 그 사이에 사용자가 Inspector에서
+            // padding을 직접 편집한 것입니다. 편집된 만큼(delta)을 원본 기준선에도 반영해 다음 적용 시
+            // 사용자의 편집이 되돌아가지 않도록 합니다.
+            if (_lastAppliedPadding != null && !PaddingEquals(current, _lastAppliedPadding))
             {
                 _originalPadding = new RectOffset(
-                    _layoutGroup.padding.left,
-                    _layoutGroup.padding.right,
-                    _layoutGroup.padding.top,
-                    _layoutGroup.padding.bottom
+                    _originalPadding.left + (current.left - _lastAppliedPadding.left),
+                    _originalPadding.right + (current.right - _lastAppliedPadding.right),
+                    _originalPadding.top + (current.top - _lastAppliedPadding.top),
+                    _originalPadding.bottom + (current.bottom - _lastAppliedPadding.bottom)
                 );
-                _initializedOriginal = true;
             }
+        }
+
+        private static bool PaddingEquals(RectOffset a, RectOffset b)
+        {
+            return a.left == b.left && a.right == b.right && a.top == b.top && a.bottom == b.bottom;
         }
 
         private void OnEnable()
@@ -115,10 +138,21 @@ namespace Jeomseon.Unity.SafeArea
             if (useBottom)
                 padBottom = _originalPadding.bottom + Mathf.RoundToInt(bottom / scaleFactor);
 
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                Undo.RecordObject(_layoutGroup, "Apply Safe Area Padding");
+#endif
+
             _layoutGroup.padding.left = padLeft;
             _layoutGroup.padding.right = padRight;
             _layoutGroup.padding.top = padTop;
             _layoutGroup.padding.bottom = padBottom;
+            _lastAppliedPadding = new RectOffset(padLeft, padRight, padTop, padBottom);
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                EditorUtility.SetDirty(_layoutGroup);
+#endif
 
             LayoutRebuilder.MarkLayoutForRebuild(_layoutGroup.transform as RectTransform);
         }
