@@ -30,7 +30,7 @@ namespace Jeomseon.Unity.SafeArea
         /// SafeArea와 ScreenSize를 기반으로
         /// 각 방향별 인셋(left, right, top, bottom)을 계산한다. (px 단위)
         /// </summary>
-        public static void GetInsets(Rect safeArea, Vector2 screenSize,
+        public static void GetInsets(in Rect safeArea, in Vector2 screenSize,
             out float left, out float right, out float top, out float bottom)
         {
             left = safeArea.xMin;
