@@ -9,18 +9,16 @@ namespace Jeomseon.Unity.SafeArea
     /// </summary>
     internal static class SafeAreaPatchCore
     {
-        public const string SafeAreaRootName = "SafeAreaRoot";
-        public const string IgnoreCanvasTag = "IgnoreSafeAreaCanvas";
-
         /// <summary>
         /// 주어진 Canvas를 SafeAreaRoot로 감싸고, SafeAreaRoot 컴포넌트를 부착한다.
         /// 이미 패치되어 있으면 그대로 두고 기존 SafeAreaRoot를 반환.
+        /// settings를 생략하면 SafeAreaSettings.Resolve()로 얻은 기본 정책을 사용한다.
         /// </summary>
-        /* TODO(P1-02, editor-settings): 고정된 root 이름과 제외 태그, World Space 처리,
-         * 자식 재배치 정책을 SafeAreaSettings ScriptableObject 또는 Project Settings로 노출합니다.
-         * Custom Inspector에서 적용 대상을 미리 확인하고 씬 변경 전 Undo와 preview를 지원합니다.
+        /* TODO(P1-02, editor-settings): 자식 재배치 정책(현재는 항상 전체 이동)을 SafeAreaSettings로
+         * 추가 노출하고, Custom Inspector에서 적용 대상을 미리 확인하고 씬 변경 전 Undo와 preview를
+         * 지원합니다.
          */
-        public static GameObject EnsureSafeAreaRoot(Canvas canvas)
+        public static GameObject EnsureSafeAreaRoot(Canvas canvas, SafeAreaSettings settings = null)
         {
             if (canvas == null)
                 return null;
@@ -29,12 +27,13 @@ namespace Jeomseon.Unity.SafeArea
             if (canvasTransform == null)
                 return null;
 
-            // WorldSpace Canvas는 기본적으로 스킵 (필요하면 분기 추가)
-            if (canvas.renderMode == RenderMode.WorldSpace)
+            var effectiveSettings = settings != null ? settings : SafeAreaSettings.Resolve();
+
+            if (effectiveSettings.SkipWorldSpaceCanvases && canvas.renderMode == RenderMode.WorldSpace)
                 return null;
 
-            // 이 Canvas를 SafeArea 적용 대상에서 제외하고 싶을 때: 태그 IgnoreSafeAreaCanvas
-            if (canvas.gameObject.tag == IgnoreCanvasTag)
+            // 이 Canvas를 SafeArea 적용 대상에서 제외하고 싶을 때: SafeAreaIgnore 컴포넌트 부착
+            if (canvas.TryGetComponent<SafeAreaIgnore>(out _))
                 return null;
 
             // 이미 SafeAreaRoot 컴포넌트가 자식에 있으면, 그걸 사용
@@ -43,7 +42,7 @@ namespace Jeomseon.Unity.SafeArea
                 return existingSafeAreaRoot.gameObject;
 
             // 새 SafeAreaRoot GameObject 생성
-            var safeRootGO = new GameObject(SafeAreaRootName);
+            var safeRootGO = new GameObject(effectiveSettings.RootName);
             var safeRootRect = safeRootGO.AddComponent<RectTransform>();
 
             safeRootRect.SetParent(canvasTransform, false);

@@ -51,7 +51,6 @@ namespace Jeomseon.Unity.SafeArea.Editor
 
         private void OnEnable()
         {
-            Debug.Log("Enable!");
             // 시뮬레이터 값 초기화
             RefreshSimulatorValues();
             _lastSimScreenSize = _simScreenSize;
@@ -416,6 +415,7 @@ namespace Jeomseon.Unity.SafeArea.Editor
             if (!activeScene.IsValid() || !activeScene.isLoaded)
                 return;
 
+            var settings = SafeAreaSettings.Resolve();
             var roots = activeScene.GetRootGameObjects();
 
             foreach (var root in roots)
@@ -437,7 +437,7 @@ namespace Jeomseon.Unity.SafeArea.Editor
                     if (clone.TryGetComponent<Canvas>(out var cloneCanvas))
                     {
                         SetupCanvasForPreview(cloneCanvas);
-                        SafeAreaPatchCore.EnsureSafeAreaRoot(cloneCanvas);
+                        SafeAreaPatchCore.EnsureSafeAreaRoot(cloneCanvas, settings);
                         _previewCanvasCount++;
                     }
                 }

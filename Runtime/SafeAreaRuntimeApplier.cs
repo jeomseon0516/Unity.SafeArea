@@ -10,12 +10,17 @@ namespace Jeomseon.Unity.SafeArea
     /// </summary>
     public static class SafeAreaRuntimeApplier
     {
-        /* TODO(P1-01, architecture): 모든 Canvas를 전역 검색해 계층을 자동 변경하는 대신,
-         * ScriptableObject 설정이나 명시적 부트스트랩으로 적용 대상을 선택할 수 있게 개선합니다.
-         */
+        /// <summary>
+        /// SafeAreaSettings.AutoPatchRuntimeCanvases가 true인 프로젝트에서만 씬 로드마다
+        /// 자동으로 모든 Canvas를 패치한다(기본값 false, 옵트인). 꺼져 있으면 아무것도 구독하지
+        /// 않으며, ApplyToAllCanvases()를 통한 명시적 수동 호출은 이 설정과 무관하게 항상 동작한다.
+        /// </summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Init()
         {
+            if (!SafeAreaSettings.Resolve().AutoPatchRuntimeCanvases)
+                return;
+
             SceneManager.sceneLoaded += OnSceneLoaded;
             ApplyToAllCanvases();
         }
@@ -26,14 +31,16 @@ namespace Jeomseon.Unity.SafeArea
         }
 
         /// <summary>
-        /// 현재 로드된 모든 Canvas에 SafeAreaRoot를 붙인다.
+        /// 현재 로드된 모든 Canvas에 SafeAreaRoot를 붙인다. SafeAreaSettings.AutoPatchRuntimeCanvases
+        /// 설정과 무관하게 항상 동작하는 명시적 진입점이다.
         /// </summary>
         public static void ApplyToAllCanvases()
         {
+            var settings = SafeAreaSettings.Resolve();
             var canvases = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include);
             foreach (var canvas in canvases)
             {
-                SafeAreaPatchCore.EnsureSafeAreaRoot(canvas);
+                SafeAreaPatchCore.EnsureSafeAreaRoot(canvas, settings);
             }
         }
     }
