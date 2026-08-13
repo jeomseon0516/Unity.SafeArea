@@ -6,35 +6,15 @@ namespace Jeomseon.Unity.SafeArea
     /// <summary>
     /// Centralized access to Safe Area and screen size.
     /// - 런타임: Screen.safeArea / Screen.width / Screen.height 사용
-    /// - 에디터: SafeAreaPreviewWindow에서 EditorOverrideEnabled, EditorSafeArea로 오버라이드 가능
+    /// - 에디터 프리뷰: SafeAreaPreviewWindow가 SafeAreaRoot.ApplyPreview로 직접 값을 주입
     /// </summary>
     public static class SafeAreaUtility
     {
-#if UNITY_EDITOR
-        /// <summary>
-        /// true이면 Screen.safeArea 대신 EditorSafeArea를 반환한다.
-        /// (에디터 전용, 빌드에서는 항상 false 취급)
-        /// </summary>
-        public static bool EditorOverrideEnabled { get; set; }
-
-        /// <summary>
-        /// 에디터 전용 SafeArea 오버라이드 값(px).
-        /// </summary>
-        public static Rect EditorSafeArea { get; set; }
-#endif
-
         /// <summary>
         /// 현재 Safe Area를 반환한다.
-        /// 에디터에서 EditorOverrideEnabled가 true면 EditorSafeArea를 반환한다.
         /// </summary>
         public static Rect GetSafeArea()
         {
-#if UNITY_EDITOR
-            if (EditorOverrideEnabled)
-            {
-                return EditorSafeArea;
-            }
-#endif
             return Screen.safeArea;
         }
 

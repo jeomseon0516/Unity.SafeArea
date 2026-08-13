@@ -33,9 +33,27 @@
 
 ## [Unreleased]
 
+- **(Breaking)** `SafeAreaUtility.EditorOverrideEnabled`/`EditorSafeArea`를 제거했습니다. XML 문서에는
+  `SafeAreaPreviewWindow`가 이 값을 사용한다고 되어 있었으나 실제로는 어디에서도 참조되지 않는 죽은
+  API였습니다(Preview는 `SafeAreaRoot.ApplyPreview`로 값을 직접 주입하는 별도 경로를 씁니다).
+- **(Breaking)** Canvas를 SafeArea 패치 대상에서 제외하는 방식을 태그(`IgnoreSafeAreaCanvas`) 기반에서
+  `SafeAreaIgnore` 마커 컴포넌트 부착 방식으로 교체했습니다. 태그 방식은 프로젝트 Tag Manager에 해당
+  태그를 미리 등록해야 동작했는데 패키지가 이를 제공하지 않아 사실상 opt-out이 불가능했습니다.
+- **(Breaking)** `SafeAreaRuntimeApplier`가 씬 로드 시 모든 Canvas를 무조건 자동 패치하던 동작을 새
+  `SafeAreaSettings.AutoPatchRuntimeCanvases`(기본값 `false`, 옵트인)로 게이팅했습니다. 기존처럼 자동
+  패치를 쓰려면 `Assets/Resources/SafeAreaSettings.asset`을 만들고 옵션을 켜야 합니다.
+  `SafeAreaRuntimeApplier.ApplyToAllCanvases()`/`SafeAreaScenePatcher`를 통한 명시적 호출은 이 설정과
+  무관하게 항상 동작합니다.
+- `SafeAreaSettings` ScriptableObject(`Jeomseon/Safe Area/Safe Area Settings` 메뉴로 생성)를 추가해 root
+  이름, World Space Canvas 스킵 여부, 런타임 자동 패치 사용 여부를 설정할 수 있게 했습니다.
+  `SafeAreaPatchCore.EnsureSafeAreaRoot`가 이 정책을 주입받도록 리팩터링되어, Runtime 자동패치·Editor
+  영구패치(`SafeAreaScenePatcher`)·Preview 임시패치(`SafeAreaPreviewWindow`)가 동일한 정책을 공유하면서도
+  필요하면 서로 다르게 구성할 수 있습니다.
+- `SafeAreaPreviewWindow`에 남아있던 디버그용 `Debug.Log("Enable!")` 호출을 제거했습니다.
 - TODO: Unity Device Simulator와 자체 프리뷰 창의 역할을 비교하고 통합 여부를 결정합니다.
-- TODO: 전체 Canvas 자동 검색·구조 변경을 명시적 설정 기반 부트스트랩으로 교체할지 검토합니다.
 - TODO: 안전 영역 갱신 이벤트의 정적 수명과 Enter Play Mode Options 호환성을 검토합니다.
+- TODO: 자식 재배치 정책(현재는 항상 Canvas의 모든 자식을 이동)을 `SafeAreaSettings`로 추가 노출하고,
+  Custom Inspector에서 적용 대상 preview와 씬 변경 전 Undo를 지원합니다.
 
 ## [0.1.0] - 2026-07-29
 

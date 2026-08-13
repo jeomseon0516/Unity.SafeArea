@@ -33,6 +33,7 @@ namespace Jeomseon.Unity.SafeArea.Editor
         /// </summary>
         public static void PatchScene(Scene scene, bool useUndo)
         {
+            var settings = SafeAreaSettings.Resolve();
             var roots = scene.GetRootGameObjects();
             foreach (var root in roots)
             {
@@ -42,7 +43,7 @@ namespace Jeomseon.Unity.SafeArea.Editor
                     if (useUndo)
                         Undo.RegisterFullObjectHierarchyUndo(canvas.gameObject, "Patch SafeArea Canvas");
 
-                    SafeAreaPatchCore.EnsureSafeAreaRoot(canvas);
+                    SafeAreaPatchCore.EnsureSafeAreaRoot(canvas, settings);
 
                     if (useUndo)
                         EditorUtility.SetDirty(canvas);
