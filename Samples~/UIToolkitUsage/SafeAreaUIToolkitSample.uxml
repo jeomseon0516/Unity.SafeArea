@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="SafeAreaUIToolkitSample.uss" />
+    <ui:VisualElement name="safe-area-panel" class="safe-area-panel">
+        <ui:Label text="SafeAreaVisualElementRoot demo. Select a notched device in the Game View or Device Simulator to see the panel shrink to the safe area." class="body-label" />
+    </ui:VisualElement>
+    <ui:VisualElement name="header" class="header">
+        <ui:Label text="Safe Area Header (UI Toolkit)" class="header-label" />
+    </ui:VisualElement>
+</ui:UXML>

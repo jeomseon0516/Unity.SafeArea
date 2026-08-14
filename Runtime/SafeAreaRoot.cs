@@ -4,9 +4,10 @@ using UnityEngine.Serialization;
 namespace Jeomseon.Unity.SafeArea
 {
     /// <summary>
-    /// RectTransform을 Safe Area에 맞게 자동으로 맞춰주는 컴포넌트.
-    /// - 런타임: SafeAreaWatcher.SafeAreaChanged 이벤트를 구독해서 갱신
-    /// - 에디터/프리뷰: Preview에서 직접 ApplyPreview 호출
+    /// RectTransform을 Safe Area에 맞게 자동으로 맞춰주는 컴포넌트. 런타임/에디터 모두
+    /// <see cref="SafeAreaWatcher.SafeAreaChanged"/> 이벤트를 구독해서 갱신한다. Safe Area Preview
+    /// Window(Editor)는 원본 Scene의 이 인스턴스를 절대 건드리지 않고, PreviewScene에 복제한
+    /// 인스턴스에서만 <see cref="ApplyPreview"/>를 호출해 격리된 미리보기를 만든다.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(RectTransform))]
@@ -76,16 +77,18 @@ namespace Jeomseon.Unity.SafeArea
 
 #if UNITY_EDITOR
         /// <summary>
-        /// 에디터 PreviewScene 전용: 외부에서 safeArea + screenSize를 직접 지정해서 적용.
-        /// 원본 씬의 SafeAreaUtility / Watcher와는 무관하게 동작.
+        /// Safe Area Preview Window 전용 진입점. PreviewScene에 복제된 인스턴스에서만 호출되며,
+        /// <see cref="SafeAreaWatcher"/> 이벤트를 거치지 않고 전달받은 safeArea/screenSize를 그대로
+        /// 적용한다. 원본 Scene의 SafeAreaRoot는 이 메서드가 호출되지 않으므로 Preview 조작에
+        /// 영향받지 않는다.
         /// </summary>
         internal void ApplyPreview(Rect safeArea, Vector2 screenSize)
         {
-            if (screenSize.x <= 0f || screenSize.y <= 0f)
-                return;
-
             if (_rectTransform == null)
                 _rectTransform = GetComponent<RectTransform>();
+
+            if (screenSize.x <= 0f || screenSize.y <= 0f)
+                return;
 
             ApplyInternal(safeArea, screenSize);
         }

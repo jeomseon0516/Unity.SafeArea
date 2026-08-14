@@ -1,0 +1,28 @@
+.safe-area-panel {
+    /* position/left/right/top/bottom는 SafeAreaVisualElementRoot가 런타임에 채운다(uGUI
+       SafeAreaRoot의 anchor에 대응 — 배경이 실제로 안전 영역 크기로 줄어든다). */
+    background-color: rgba(51, 204, 77, 0.35);
+}
+
+.header {
+    /* 화면 상단에 항상 고정(전체 폭). 안쪽 padding.top만 SafeAreaVisualElementPadding이 안전
+       영역만큼 채운다 — uGUI Header의 top-stretch anchor + SafeAreaPadding 조합과 동일. */
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(51, 128, 230, 0.5);
+}
+
+.header-label {
+    color: rgb(255, 255, 255);
+    -unity-font-style: bold;
+}
+
+.body-label {
+    color: rgb(255, 255, 255);
+    margin: 16px;
+    white-space: normal;
+}

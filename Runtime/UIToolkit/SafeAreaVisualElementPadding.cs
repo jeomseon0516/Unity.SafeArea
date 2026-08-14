@@ -4,11 +4,10 @@ using UnityEngine.UIElements;
 namespace Jeomseon.Unity.SafeArea.UIToolkit
 {
     /// <summary>
-    /// UI Toolkit(<see cref="VisualElement"/>) 대응. <see cref="SafeArea.SafeAreaRoot"/>/
-    /// <see cref="SafeArea.SafeAreaPadding"/>는 <c>RectTransform</c>/<c>LayoutGroup</c> 기반이라
-    /// uGUI 전용이며 <see cref="UIDocument"/>에는 적용되지 않아 별도로 제공합니다. VisualElement는
-    /// anchor 개념이 없어(flex 기반 레이아웃) padding 하나로 "화면 전체를 안쪽으로 밀기"(모든 방향
-    /// 사용)와 "가장자리 일부만 밀기"(예: 상단 헤더)를 둘 다 표현합니다.
+    /// <see cref="SafeArea.SafeAreaPadding"/>의 UI Toolkit 대응. 지정한 <see cref="VisualElement"/>의
+    /// padding에 안전 영역 인셋을 더해 콘텐츠만 안쪽으로 밀어 넣습니다(배경은 그대로 유지 — 웹의
+    /// <c>env(safe-area-inset-*)</c> padding 관례와 동일). 박스 자체(배경 포함)를 안전 영역 크기로
+    /// 실제로 줄여야 하면 <see cref="SafeAreaVisualElementRoot"/>를 씁니다.
     /// </summary>
     [RequireComponent(typeof(UIDocument))]
     public sealed class SafeAreaVisualElementPadding : MonoBehaviour
@@ -42,7 +41,7 @@ namespace Jeomseon.Unity.SafeArea.UIToolkit
             ApplyPadding(safeArea);
         }
 
-        private void ApplyPadding(Rect safeArea)
+        private void ApplyPadding(in Rect safeArea)
         {
             var target = ResolveTarget();
             if (target == null)

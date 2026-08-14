@@ -10,6 +10,14 @@ using Jeomseon.Unity.SafeArea;
 
 namespace Jeomseon.Unity.SafeArea.Editor
 {
+    /// <summary>
+    /// Device Simulator에 값 전파를 위임하는 방식은(<c>SafeAreaWatcher.ForceUpdate()</c>로 실제
+    /// Scene의 컴포넌트를 직접 갱신) 검토했지만 채택하지 않았다 — "Preview는 원본 Scene을 절대
+    /// 건드리지 않아야 한다"는 원칙과 충돌한다. Undo/SetDirty를 안 걸어도, 사용자가 다른 이유로
+    /// Scene을 dirty시키고 저장하면 Preview가 실제 컴포넌트에 써넣은 값까지 같이 저장될 위험이
+    /// 있다. 그래서 원본과 완전히 격리된 PreviewScene(복제 Canvas + Camera + RenderTexture)에만
+    /// 적용하고, 렌더링 결과만 이 창에 그려서 보여준다.
+    /// </summary>
     public class SafeAreaPreviewWindow : EditorWindow
     {
         private bool _overrideEnabled = false; // 기본은 OFF
@@ -38,11 +46,13 @@ namespace Jeomseon.Unity.SafeArea.Editor
         //  Menu
         // =====================================================================
 
+        private const float ControlPanelWidth = 340f;
+
         [MenuItem("Jeomseon/Safe Area/Preview Window")]
         public static void ShowWindow()
         {
             var window = GetWindow<SafeAreaPreviewWindow>("Safe Area Preview");
-            window.minSize = new Vector2(480, 320);
+            window.minSize = new Vector2(720, 360);
         }
 
         // =====================================================================
@@ -65,6 +75,11 @@ namespace Jeomseon.Unity.SafeArea.Editor
             // GameView 변경 감지용 (하지만 무거운 작업은 여기서 안 함)
             EditorApplication.update += OnEditorUpdate;
 
+            // PreviewScene은 도메인 리로드(재컴파일) 시 Unity가 자체적으로 강제 정리한다. OnDisable만
+            // 믿으면 그 정리 타이밍과 경합해 "Releasing render texture that is set as
+            // Camera.targetTexture!" 경고가 날 수 있어, 리로드 직전에 우리가 먼저 정리한다.
+            AssemblyReloadEvents.beforeAssemblyReload += DestroyPreviewScene;
+
             // 첫 진입 시 한 번만 전체 리빌드
             RebuildAll();
         }
@@ -72,6 +87,7 @@ namespace Jeomseon.Unity.SafeArea.Editor
         private void OnDisable()
         {
             EditorApplication.update -= OnEditorUpdate;
+            AssemblyReloadEvents.beforeAssemblyReload -= DestroyPreviewScene;
             DestroyPreviewScene();
         }
 
@@ -82,7 +98,7 @@ namespace Jeomseon.Unity.SafeArea.Editor
         private void OnEditorUpdate()
         {
             // 항상 시뮬레이터(Screen) 값만 추적
-            Vector2 currentScreenSize = Handles.GetMainGameViewSize(); ;
+            Vector2 currentScreenSize = Handles.GetMainGameViewSize();
             Rect currentSafeArea = Screen.safeArea;
 
             bool screenSizeChanged =
@@ -120,73 +136,91 @@ namespace Jeomseon.Unity.SafeArea.Editor
         private void OnGUI()
         {
             EditorGUILayout.LabelField("Safe Area Preview (PreviewScene)", EditorStyles.boldLabel);
-
-            EditorGUILayout.LabelField($"Source canvases  : {_srcCanvasCount}");
-            EditorGUILayout.LabelField($"Preview canvases : {_previewCanvasCount}");
-
-            if (_previewScene.IsValid())
-            {
-                int canvasInScene = _previewScene.GetRootGameObjects()
-                    .Sum(r => r.GetComponentsInChildren<Canvas>(true).Length);
-                EditorGUILayout.LabelField($"Canvases in PreviewScene: {canvasInScene}");
-            }
-
-            if (_previewCamera != null)
-            {
-                EditorGUILayout.LabelField($"Camera enabled: {_previewCamera.enabled}");
-                EditorGUILayout.LabelField($"Camera active: {_previewCamera.gameObject.activeInHierarchy}");
-            }
-
             EditorGUILayout.Space();
 
-            // 시뮬레이터(현재 GameView) 기준 값 디스플레이 (읽기 전용)
-            using (new EditorGUI.DisabledScope(true))
+            // 리빌드는 모든 레이아웃 Scope가 닫힌 뒤 마지막에 한 번만 수행한다(같은 프레임에 여러 번
+            // 리빌드하지 않기 위한 플래그일 뿐 — HorizontalScope/VerticalScope의 Dispose가 Begin/End를
+            // 항상 짝지어 호출해주므로 그룹 균형 자체는 걱정할 필요 없음).
+            bool needsRebuild = false;
+
+            using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUILayout.Vector2Field("Simulator Screen (px)", _simScreenSize);
-                EditorGUILayout.RectField("Simulator SafeArea (px)", _simSafeArea);
-            }
-
-            EditorGUILayout.Space();
-
-            // ----- Override 토글 -----
-            bool prevOverride = _overrideEnabled;
-            _overrideEnabled = EditorGUILayout.Toggle("Override Safe Area", _overrideEnabled);
-
-            if (prevOverride != _overrideEnabled)
-            {
-                // Override를 껐을 때는, 필드를 시뮬레이터 상태로 맞춰두면 UX가 더 직관적
-                if (!_overrideEnabled)
+                // ----- 왼쪽: 컨트롤 패널 -----
+                using (new EditorGUILayout.VerticalScope(GUILayout.Width(ControlPanelWidth)))
                 {
-                    _overrideScreenSize = _simScreenSize;
-                    _overrideSafeArea = _simSafeArea;
+                    EditorGUILayout.LabelField($"Source canvases  : {_srcCanvasCount}");
+                    EditorGUILayout.LabelField($"Preview canvases : {_previewCanvasCount}");
+
+                    if (_previewScene.IsValid())
+                    {
+                        int canvasInScene = _previewScene.GetRootGameObjects()
+                            .Sum(r => r.GetComponentsInChildren<Canvas>(true).Length);
+                        EditorGUILayout.LabelField($"Canvases in PreviewScene: {canvasInScene}");
+                    }
+
+                    if (_previewCamera != null)
+                    {
+                        EditorGUILayout.LabelField($"Camera enabled: {_previewCamera.enabled}");
+                        EditorGUILayout.LabelField($"Camera active: {_previewCamera.gameObject.activeInHierarchy}");
+                    }
+
+                    EditorGUILayout.Space();
+
+                    // 시뮬레이터(현재 GameView) 기준 값 디스플레이 (읽기 전용)
+                    using (new EditorGUI.DisabledScope(true))
+                    {
+                        EditorGUILayout.Vector2Field("Simulator Screen (px)", _simScreenSize);
+                        EditorGUILayout.RectField("Simulator SafeArea (px)", _simSafeArea);
+                    }
+
+                    EditorGUILayout.Space();
+
+                    // ----- Override 토글 -----
+                    bool prevOverride = _overrideEnabled;
+                    _overrideEnabled = EditorGUILayout.Toggle("Override Safe Area", _overrideEnabled);
+
+                    if (prevOverride != _overrideEnabled)
+                    {
+                        // Override를 껐을 때는, 필드를 시뮬레이터 상태로 맞춰두면 UX가 더 직관적
+                        if (!_overrideEnabled)
+                        {
+                            _overrideScreenSize = _simScreenSize;
+                            _overrideSafeArea = _simSafeArea;
+                        }
+
+                        // Override 상태가 바뀌면, 현재 설정에 맞춰 한 번만 전체 리빌드
+                        needsRebuild = true;
+                    }
+                    else
+                    {
+                        EditorGUILayout.Space();
+
+                        // ----- Override 값 편집 (Override ON일 때만 수정 가능) -----
+                        using (new EditorGUI.DisabledScope(!_overrideEnabled))
+                        {
+                            _overrideScreenSize = EditorGUILayout.Vector2Field("Override Screen Size (px)", _overrideScreenSize);
+                            _overrideSafeArea = EditorGUILayout.RectField("Override Safe Area (px)", _overrideSafeArea);
+                        }
+
+                        if (GUILayout.Button("Apply & Rebuild Preview"))
+                        {
+                            // Override ON이면 사용자가 입력한 값을, OFF이면 시뮬레이터 값을 사용하여
+                            // 한 번만 전체 리빌드
+                            needsRebuild = true;
+                        }
+                    }
                 }
 
-                // Override 상태가 바뀌면, 현재 설정에 맞춰 한 번만 전체 리빌드
+                // ----- 오른쪽: 프리뷰 렌더 (남은 가로 공간 전체) -----
+                using (new EditorGUILayout.VerticalScope())
+                {
+                    if (!needsRebuild)
+                        DrawPreview();
+                }
+            }
+
+            if (needsRebuild)
                 RebuildAll();
-                return; // 이 프레임에서는 여기까지만 GUI 진행
-            }
-
-            EditorGUILayout.Space();
-
-            // ----- Override 값 편집 (Override ON일 때만 수정 가능) -----
-            using (new EditorGUI.DisabledScope(!_overrideEnabled))
-            {
-                _overrideScreenSize = EditorGUILayout.Vector2Field("Override Screen Size (px)", _overrideScreenSize);
-                _overrideSafeArea = EditorGUILayout.RectField("Override Safe Area (px)", _overrideSafeArea);
-            }
-
-            if (GUILayout.Button("Apply & Rebuild Preview"))
-            {
-                // Override ON이면 사용자가 입력한 값을, OFF이면 시뮬레이터 값을 사용하여
-                // 한 번만 전체 리빌드
-                RebuildAll();
-                return;
-            }
-
-            EditorGUILayout.Space();
-
-            // ----- 프리뷰 그리기 -----
-            DrawPreview();
         }
 
         // =====================================================================
@@ -242,9 +276,6 @@ namespace Jeomseon.Unity.SafeArea.Editor
         //  PreviewScene 구축/해제
         // =====================================================================
 
-        /* TODO(P3-01, api): Unity Device Simulator가 화면 크기와 Safe Area 시뮬레이션을 제공하므로,
-         * 자체 PreviewScene 렌더링을 유지할지 Device Simulator 연동으로 대체할지 비교합니다.
-         */
         private void CreatePreviewScene()
         {
             if (_previewScene.IsValid())
@@ -512,6 +543,12 @@ namespace Jeomseon.Unity.SafeArea.Editor
                 foreach (var sr in safeAreaRoots)
                 {
                     sr.ApplyPreview(safeArea, screenSize);
+                }
+
+                var safeAreaPaddings = root.GetComponentsInChildren<SafeAreaPadding>(true);
+                foreach (var sp in safeAreaPaddings)
+                {
+                    sp.ApplyPreview(safeArea, screenSize);
                 }
             }
         }
