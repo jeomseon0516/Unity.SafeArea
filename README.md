@@ -24,20 +24,28 @@ https://github.com/jeomseon0516/Unity.SafeArea.git#v0.1.2
 - `SafeAreaRuntimeApplier`: `SafeAreaSettings.AutoPatchRuntimeCanvases`가 켜져 있을 때만 씬 로드마다
   모든 Canvas를 자동 패치합니다(기본값 꺼짐, 옵트인). `ApplyToAllCanvases()`로 언제든 수동 호출도
   가능합니다.
-- `SafeAreaPreviewWindow`: 에디터 프리뷰
+- `SafeAreaPreviewWindow`(`Jeomseon/Safe Area/Preview Window`): 열려 있는 Scene의 Canvas를 원본과
+  격리된 PreviewScene에 복제해 자체 Camera/RenderTexture로 렌더링합니다. 원본 Scene의 SafeArea
+  컴포넌트는 전혀 건드리지 않으므로, 이 창을 열어도 원본 Scene 상태는 항상 안전합니다. 값은 Unity
+  내장 Device Simulator(`Window/General/Device Simulator`)의 `Screen.safeArea`를 기본으로 읽어오며,
+  Override 토글로 임의의 값을 직접 입력해 확인할 수도 있습니다.
 
 ### UI Toolkit
 
-- `SafeAreaVisualElementPadding`(`Jeomseon.Unity.SafeArea.UIToolkit`): `UIDocument`가 붙은
-  GameObject에 부착합니다. 지정한 `VisualElement`(비우면 `rootVisualElement`)의 padding에 안전
-  영역 인셋을 더합니다. `RectTransform`/`LayoutGroup`이 없는 UI Toolkit에는 anchor 개념 자체가 없어,
-  이 컴포넌트 하나로 "화면 전체를 안쪽으로 밀기"(전 방향 사용)와 "가장자리 일부만 밀기"(예: 상단
-  헤더만)를 모두 표현합니다. `SafeAreaRoot`/`SafeAreaPadding`처럼 Inspector에서 편집한 값을 그대로
-  두는 대신, 베이스 padding(`basePaddingLeft/Right/Top/Bottom`)을 직접 필드로 받아 안전 영역 인셋과
-  합산합니다.
+- `SafeAreaVisualElementRoot`(`Jeomseon.Unity.SafeArea.UIToolkit`, `SafeAreaRoot`의 UI Toolkit
+  대응): `UIDocument`가 붙은 GameObject에 부착합니다. `RectTransform` anchor 대신
+  `Position.Absolute` + `left`/`right`/`top`/`bottom` 인셋으로 지정한 `VisualElement`(비우면
+  `rootVisualElement`)의 박스 자체(배경 포함)를 안전 영역 크기로 실제로 줄입니다.
+- `SafeAreaVisualElementPadding`(`SafeAreaPadding`의 UI Toolkit 대응): 지정한
+  `VisualElement`의 padding에 안전 영역 인셋을 더합니다(배경은 그대로 두고 내부 콘텐츠만 안쪽으로
+  밀어 넣음 — 웹의 `env(safe-area-inset-*)` padding 관례와 동일). 베이스 padding
+  (`basePaddingLeft/Right/Top/Bottom`)을 직접 필드로 받아 안전 영역 인셋과 합산합니다.
+
+두 컴포넌트의 선택 기준: 화면 전체(배경 포함)를 안전 영역에 맞춰 실제로 줄여야 하면 `Root`를,
+배경은 노치 아래까지 깔리고 콘텐츠만 피하면 되는 경우(예: 상단까지 이어지는 헤더 바)라면
+`Padding`을 씁니다.
 
 두 계열 모두 같은 `SafeAreaUtility`/`SafeAreaWatcher`(Runtime, `Screen.safeArea` 기반)를 공유합니다.
 uGUI용 API는 `RectTransform`/`LayoutGroup`이 필요해 UI Toolkit에는 적용되지 않으므로, UI Toolkit
-프로젝트는 `SafeAreaVisualElementPadding`을 사용해야 합니다.
-
-Device Simulator가 제공하는 화면 시뮬레이션과 역할이 겹치는 프리뷰 부분은 향후 통합 여부를 검토합니다.
+프로젝트는 `SafeAreaVisualElementPadding`을 사용해야 합니다. 사용 예제는 `Samples~/UIToolkitUsage`
+참고(uGUI 예제는 `Samples~/BasicUsage`).

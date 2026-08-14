@@ -16,7 +16,6 @@
   채우는 것으로 제외가 정상 동작하는지 확인합니다.
 - **Safe Area Debug Print** — 기존 `SafeAreaSample` 컴포넌트. 컨텍스트 메뉴로 현재 Safe Area
   인셋 계산 결과를 Console에 출력합니다.
-- **EventSystem** — 표준 UGUI 이벤트 시스템(이 씬 자체에는 클릭 상호작용이 없지만 관례상 포함).
 
 ## 확인 절차
 
@@ -29,13 +28,12 @@
 3. `Ignored Canvas`의 `Full Screen Marker`(빨간색)는 Safe Area와 무관하게 항상 화면 전체를 채우는지
    확인합니다.
 4. Edit Mode에서 `Header`를 선택하고 Inspector의 `Vertical Layout Group > Padding > Top` 값을 직접
-   바꿔봅니다. 값이 유지되고, 이후 `SafeAreaPreviewWindow`나 디바이스 시뮬레이터로 Safe Area 값을
-   다시 바꿨을 때 방금 입력한 값 위에 인셋이 더해지는지 확인합니다(전에는 최초 캐싱값으로 되돌아가는
-   버그가 있었습니다). `Ctrl+Z`로 Undo가 되는지도 함께 확인합니다.
+   바꿔봅니다. 값이 유지되고, 이후 Safe Area 값을 다시 적용했을 때 방금 입력한 값 위에 인셋이
+   더해지는지 확인합니다. `Ctrl+Z`로 Undo가 되는지도 함께 확인합니다.
 5. `Jeomseon/Safe Area/Patch Active Scene` 메뉴를 실행합니다. `Canvas`는 이미 `SafeAreaRoot`가 있어
    변화가 없어야 하고, `Ignored Canvas`는 `SafeAreaIgnore` 때문에 전혀 건드려지지 않아야 합니다.
-6. `Jeomseon/Safe Area/Preview Window`(또는 해당 메뉴)를 열어 Safe Area 프리뷰가 `Safe Area Panel`에
-   정상 반영되는지 확인합니다.
+6. `Jeomseon/Safe Area/Preview Window`를 열어 PreviewScene에 복제된 Canvas와 Safe Area Panel이
+   원본 Scene을 변경하지 않고 표시되는지 확인합니다.
 7. `Safe Area Debug Print`의 컨텍스트 메뉴 `Safe Area 출력`을 실행해 Console에서 인셋 값을 확인합니다.
 8. (선택) `Assets/Resources/`에 `Jeomseon/Safe Area/Safe Area Settings` 메뉴로 `SafeAreaSettings`
    에셋을 만들고 `Auto Patch Runtime Canvases`를 켠 뒤 Play Mode에 재진입해, 런타임 자동 패치

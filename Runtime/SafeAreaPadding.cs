@@ -1,9 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Serialization;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace Jeomseon.Unity.SafeArea
 {
@@ -99,10 +96,26 @@ namespace Jeomseon.Unity.SafeArea
 
         private void OnSafeAreaChanged(Rect safeArea)
         {
-            ApplyPadding(safeArea);
+            ApplyPadding(safeArea, SafeAreaUtility.GetScreenSize());
         }
 
-        private void ApplyPadding(Rect safeArea)
+#if UNITY_EDITOR
+        /// <summary>
+        /// Safe Area Preview Window 전용 진입점. PreviewScene에 복제된 인스턴스에서만 호출되며,
+        /// <see cref="SafeAreaWatcher"/> 이벤트를 거치지 않고 전달받은 safeArea/screenSize를 그대로
+        /// 적용한다. 원본 Scene의 SafeAreaPadding은 이 메서드가 호출되지 않으므로 Preview 조작에
+        /// 영향받지 않는다.
+        /// </summary>
+        internal void ApplyPreview(Rect safeArea, Vector2 screenSize)
+        {
+            if (screenSize.x <= 0f || screenSize.y <= 0f)
+                return;
+
+            ApplyPadding(safeArea, screenSize);
+        }
+#endif
+
+        private void ApplyPadding(Rect safeArea, Vector2 screenSize)
         {
             if (_layoutGroup == null)
                 _layoutGroup = GetComponent<LayoutGroup>();
@@ -110,7 +123,6 @@ namespace Jeomseon.Unity.SafeArea
             if (!_initializedOriginal)
                 CacheOriginalPadding();
 
-            Vector2 screenSize = SafeAreaUtility.GetScreenSize();
             SafeAreaUtility.GetInsets(safeArea, screenSize,
                 out float left, out float right, out float top, out float bottom);
 
@@ -138,21 +150,23 @@ namespace Jeomseon.Unity.SafeArea
             if (useBottom)
                 padBottom = _originalPadding.bottom + Mathf.RoundToInt(bottom / scaleFactor);
 
-#if UNITY_EDITOR
-            if (!Application.isPlaying)
-                Undo.RecordObject(_layoutGroup, "Apply Safe Area Padding");
-#endif
+            // SafeAreaWatcher.ForceUpdate()는 값이 실제로 바뀌었는지 확인하지 않고 매번
+            // SafeAreaChanged를 방송한다(에디터에서 SafeAreaPreviewWindow가 마우스 움직임 등으로
+            // 잦아진 EditorApplication.update tick마다 호출하는 경우 포함). 계산 결과가 이미 적용된
+            // 값과 같으면 LayoutRebuilder를 또 돌릴 이유가 없다 — 특히 ContentSizeFitter가 붙은
+            // 대상에서 불필요한 반복 relayout이 깜빡임으로 보이는 걸 막는다.
+            if (_lastAppliedPadding != null &&
+                _lastAppliedPadding.left == padLeft && _lastAppliedPadding.right == padRight &&
+                _lastAppliedPadding.top == padTop && _lastAppliedPadding.bottom == padBottom)
+            {
+                return;
+            }
 
             _layoutGroup.padding.left = padLeft;
             _layoutGroup.padding.right = padRight;
             _layoutGroup.padding.top = padTop;
             _layoutGroup.padding.bottom = padBottom;
             _lastAppliedPadding = new RectOffset(padLeft, padRight, padTop, padBottom);
-
-#if UNITY_EDITOR
-            if (!Application.isPlaying)
-                EditorUtility.SetDirty(_layoutGroup);
-#endif
 
             LayoutRebuilder.MarkLayoutForRebuild(_layoutGroup.transform as RectTransform);
         }

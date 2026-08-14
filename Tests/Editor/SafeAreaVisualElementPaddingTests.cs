@@ -19,10 +19,10 @@ namespace Jeomseon.SafeArea.Tests
                 useLeft: false, useRight: false, useTop: true, useBottom: false,
                 basePaddingLeft: 0f, basePaddingRight: 0f, basePaddingTop: 0f, basePaddingBottom: 0f);
 
-            Assert.AreEqual(0f, target.resolvedStyle.paddingLeft);
-            Assert.AreEqual(0f, target.resolvedStyle.paddingRight);
-            Assert.AreEqual(30f, target.resolvedStyle.paddingTop);
-            Assert.AreEqual(0f, target.resolvedStyle.paddingBottom);
+            Assert.AreEqual(0f, target.style.paddingLeft.value.value);
+            Assert.AreEqual(0f, target.style.paddingRight.value.value);
+            Assert.AreEqual(30f, target.style.paddingTop.value.value);
+            Assert.AreEqual(0f, target.style.paddingBottom.value.value);
         }
 
         [Test]
@@ -36,7 +36,7 @@ namespace Jeomseon.SafeArea.Tests
                 useLeft: false, useRight: false, useTop: true, useBottom: false,
                 basePaddingLeft: 0f, basePaddingRight: 0f, basePaddingTop: 16f, basePaddingBottom: 0f);
 
-            Assert.AreEqual(46f, target.resolvedStyle.paddingTop,
+            Assert.AreEqual(46f, target.style.paddingTop.value.value,
                 "베이스 padding(16) + inset(30)이 합산되어야 함");
         }
 
@@ -51,7 +51,7 @@ namespace Jeomseon.SafeArea.Tests
                 useLeft: false, useRight: false, useTop: false, useBottom: false,
                 basePaddingLeft: 0f, basePaddingRight: 0f, basePaddingTop: 16f, basePaddingBottom: 0f);
 
-            Assert.AreEqual(16f, target.resolvedStyle.paddingTop,
+            Assert.AreEqual(16f, target.style.paddingTop.value.value,
                 "useTop이 꺼져 있으면 inset과 무관하게 베이스 padding만 유지해야 함");
         }
 
