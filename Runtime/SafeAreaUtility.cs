@@ -5,8 +5,8 @@ namespace Jeomseon.Unity.SafeArea
 {
     /// <summary>
     /// Centralized access to Safe Area and screen size.
-    /// - 런타임: Screen.safeArea / Screen.width / Screen.height 사용
-    /// - 에디터 프리뷰: SafeAreaPreviewWindow가 SafeAreaRoot.ApplyPreview로 직접 값을 주입
+    /// - 런타임/에디터 공통: Screen.safeArea / Screen.width / Screen.height 사용(에디터에서는 현재
+    ///   Game View/Device Simulator 해상도를 반영).
     /// </summary>
     public static class SafeAreaUtility
     {
