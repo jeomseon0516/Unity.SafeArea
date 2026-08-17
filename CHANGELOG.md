@@ -1,37 +1,8 @@
 # 변경 기록
 
-## [0.2.0] - 2026-08-13
-
-- **(Breaking)** Runtime/Editor 네임스페이스를 패키지 규칙에 맞춰
-  `Jeomseon.Unity.SafeArea`와 `Jeomseon.Unity.SafeArea.Editor`로 변경했습니다. 이전
-  `Jeomseon.SafeArea`/`Jeomseon.SafeAreaEditor` 호환 별칭은 제공하지 않습니다.
-
-## [0.1.6] - 2026-08-11
-
-- 워크스페이스 명명 규칙에 맞춰 `SafeAreaPadding`·`SafeAreaRoot`의 `[SerializeField] private`
-  필드를 `_camelCase`에서 `camelCase`로 정리하고 기존 이름을 `[FormerlySerializedAs]`로
-  보존했습니다. 공개 API 변경은 없으며 기존 Scene·Prefab의 직렬화된 값은 그대로 유지됩니다.
-
-## [0.1.5] - 2026-08-10
-
-- `SafeAreaRuntimeApplier.ApplyToAllCanvases()`가 Unity 6000.5에서 obsolete된
-  `Object.FindObjectsByType<Canvas>(FindObjectsInactive, FindObjectsSortMode)` 오버로드를
-  사용하던 것을 `FindObjectsByType<Canvas>(FindObjectsInactive.Include)`로 교체했습니다.
-  공개 API 변경은 없습니다.
-
-## [0.1.3] - 2026-07-29
-
-- Samples 어셈블리의 `rootNamespace`를 샘플 namespace에 맞게 정리했습니다.
-
-## [0.1.2] - 2026-07-29
-
-- SafeAreaUtility 테스트 메서드의 한글 식별자를 영문 이름으로 변경했습니다.
-
-## [0.1.1] - 2026-07-29
-
-- Safe Area 인셋 계산을 확인하는 `Basic Usage` 샘플을 추가했습니다.
-
 ## [Unreleased]
+
+## [0.3.0] - 2026-08-17
 
 - **(버그 수정)** `SafeAreaPreviewWindow`에서 Override 값을 바꾸고 "Apply & Rebuild Preview"를
   눌러도 `SafeAreaPadding`(예: Header)이 반영되지 않던 문제를 고쳤습니다. `SafeAreaRoot`에만
@@ -69,6 +40,7 @@
   ExecuteAlways 방식인 `SafeAreaRoot`는 애초에 이 호출을 하지 않아 문제가 없었으므로, 그 컨벤션에
   맞춰 자동 재계산 경로는 항상 비영속(preview성) 적용으로 되돌렸습니다. Inspector에서 사용자가
   직접 필드를 편집하는 경우의 Undo/Dirty는 Unity의 기본 SerializedProperty 처리로 이미 커버됩니다.
+  **2026-08-17 사용자 Unity 재검증 완료**(Inspector 직접 편집 + Undo 정상 동작).
 - **(P1-03)** UI Toolkit 지원 `SafeAreaVisualElementPadding`(`Jeomseon.Unity.SafeArea.UIToolkit`)을
   추가했습니다. 기존 `SafeAreaRoot`/`SafeAreaPadding`은 `RectTransform`/`LayoutGroup` 기반 uGUI
   전용으로 계속 유지하며, `UIDocument`를 쓰는 프로젝트는 새 컴포넌트를 사용합니다.
@@ -109,6 +81,40 @@
 - TODO: 안전 영역 갱신 이벤트의 정적 수명과 Enter Play Mode Options 호환성을 검토합니다.
 - TODO: 자식 재배치 정책(현재는 항상 Canvas의 모든 자식을 이동)을 `SafeAreaSettings`로 추가 노출하고,
   Custom Inspector에서 적용 대상 preview와 씬 변경 전 Undo를 지원합니다.
+- TODO(P2-01): 해상도/방향/safe area가 실제로 바뀐 경우에만 레이아웃을 갱신하도록 최적화합니다.
+- TODO(P3-02, 백로그): UI Toolkit용 Preview Window(`SafeAreaVisualElementRoot`/
+  `SafeAreaVisualElementPadding` 대응)를 추가합니다.
+
+## [0.2.0] - 2026-08-13
+
+- **(Breaking)** Runtime/Editor 네임스페이스를 패키지 규칙에 맞춰
+  `Jeomseon.Unity.SafeArea`와 `Jeomseon.Unity.SafeArea.Editor`로 변경했습니다. 이전
+  `Jeomseon.SafeArea`/`Jeomseon.SafeAreaEditor` 호환 별칭은 제공하지 않습니다.
+
+## [0.1.6] - 2026-08-11
+
+- 워크스페이스 명명 규칙에 맞춰 `SafeAreaPadding`·`SafeAreaRoot`의 `[SerializeField] private`
+  필드를 `_camelCase`에서 `camelCase`로 정리하고 기존 이름을 `[FormerlySerializedAs]`로
+  보존했습니다. 공개 API 변경은 없으며 기존 Scene·Prefab의 직렬화된 값은 그대로 유지됩니다.
+
+## [0.1.5] - 2026-08-10
+
+- `SafeAreaRuntimeApplier.ApplyToAllCanvases()`가 Unity 6000.5에서 obsolete된
+  `Object.FindObjectsByType<Canvas>(FindObjectsInactive, FindObjectsSortMode)` 오버로드를
+  사용하던 것을 `FindObjectsByType<Canvas>(FindObjectsInactive.Include)`로 교체했습니다.
+  공개 API 변경은 없습니다.
+
+## [0.1.3] - 2026-07-29
+
+- Samples 어셈블리의 `rootNamespace`를 샘플 namespace에 맞게 정리했습니다.
+
+## [0.1.2] - 2026-07-29
+
+- SafeAreaUtility 테스트 메서드의 한글 식별자를 영문 이름으로 변경했습니다.
+
+## [0.1.1] - 2026-07-29
+
+- Safe Area 인셋 계산을 확인하는 `Basic Usage` 샘플을 추가했습니다.
 
 ## [0.1.0] - 2026-07-29
 
