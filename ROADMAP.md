@@ -75,6 +75,63 @@
      `SafeAreaVisualElementPadding`의 파란 Header가 각각 안전 영역을 반영했고, SafeArea EditMode
      테스트 13개가 모두 통과했습니다. Unity가 생성한 `PanelSettings.asset`/Scene도 Sample에
      포함했습니다.
+   - **Setup 메뉴 제거(2026-08-18)**: `Jeomseon/Safe Area/Setup UI Toolkit Sample` 메뉴는 이미 생성된
+     `PanelSettings.asset`/Scene이 커밋돼 있으면 항상 "이미 있음" 로그만 남기고 아무 것도 하지 않는
+     no-op이었습니다. `Jeomseon.Unity.Shaders`에서 같은 패턴을 폐기한 것과 동일한 이유로 Setup
+     스크립트와 전용 Editor asmdef를 통째로 제거했습니다 — 커밋된 `PanelSettings.asset`/
+     `SafeAreaUIToolkitSample.unity`가 Unity 자체 직렬화 결과 그대로이므로 재생성 경로가 없어도
+     안전합니다. README의 "Scene 재생성" 안내도 함께 제거.
+   - **Basic Usage와 시각적 1:1 대응(2026-08-18)**: 사용자가 스크린샷으로 `header`(파랑)와
+     `safe-area-panel`(초록)의 텍스트가 겹쳐 보인다고 지적했습니다. 원인은 `safe-area-panel`에만
+     있던 `body-label`(uGUI Basic Usage에는 대응 요소가 없음)이 header의 반투명 배경 아래로
+     내려오는 영역과 겹쳤기 때문이었습니다. uGUI Basic Usage Scene을 YAML로 직접 대조해, uGUI의
+     `Safe Area Panel`은 콘텐츠 없이 배경색만 있다는 걸 확인하고 `body-label`을 제거해 구조를
+     맞췄습니다. `header-label` 텍스트도 `"Safe Area Header"`로 맞췄습니다(uGUI Label 실제 텍스트는
+     `"Safe Area Header (SafeAreaPadding, useTop)"`이지만 고정 `400x60` 박스의 Vertical Overflow:
+     Truncate 때문에 두 번째 줄이 항상 잘려 화면엔 `"Safe Area Header"`만 보임 — 실제 렌더링 기준으로
+     맞춤), 글자 크기를 uGUI와 동일한 `28px`로, `SafeAreaVisualElementPadding`의
+     `basePaddingTop`/`basePaddingBottom`을 uGUI Header `VerticalLayoutGroup`의 padding(Top 0,
+     Bottom 0) 기준에 맞춰 `8`→`0`으로 조정(좌우 `16`은 이미 일치)했습니다.
+   - **Gamma/Linear 색상 불일치 수정(2026-08-18)**: 텍스트/구조를 맞춘 뒤에도 사용자가 "색상이 다르다"고
+     지적했습니다. 두 Scene 다 Camera가 없어 배경 차이는 아니었고, `ProjectSettings.asset`의
+     `m_ActiveColorSpace: 1`(Linear)을 확인한 뒤 uGUI `Canvas`의 `m_VertexColorAlwaysGammaSpace: 1`
+     (항상 Gamma 블렌딩)과 UI Toolkit `PanelSettings`의 `forceGammaRendering: 0`(Linear 블렌딩)이
+     서로 다르다는 걸 발견했습니다. 같은 RGBA 값이라도 블렌딩 공간이 다르면 다르게 보이는 게 원인 —
+     `PanelSettings.asset`의 `forceGammaRendering`을 `1`로 켜서 해결했습니다.
+   - **Camera 부재로 인한 프레임 누적(2026-08-18, 사용자 Unity 검증 완료)**: 색상 수정 후에도
+     사용자가 header가 "이전 화면이 계속 캐시되어 겹쳐 보이는" 것처럼 색이 진해진다고 재보고했습니다.
+     Scene에 Camera가 하나도 없다는 걸 재확인했고, Camera가 없으면 매 프레임 확실한 클리어가
+     보장되지 않아 UI Toolkit 오버레이가 이전 프레임 결과 위에 반투명 색을 계속 덧그렸을 가능성이
+     있다고 판단해 Clear Flags: Solid Color인 `Main Camera`를 Scene에 추가했습니다. **사용자가
+     Unity에서 재현 확인 — 프레임 누적 현상이 사라짐을 확인했습니다.**
+   - **uGUI Scene 되돌림(2026-08-18)**: 위 수정 직후 두 샘플의 배경색이 달라 보인다는 지적을 받아
+     uGUI Basic Usage Scene에도 같은 배경색의 Camera를 추가했었으나, **사용자가 전제 자체가 틀렸다고
+     정정**했습니다 — uGUI는 이미 안정화 완료된 패키지이고, `Safe Area Panel`/`Header`가 Image
+     컴포넌트로 화면을 실제로 덮는 불투명에 가까운 UI라 애초에 Camera 배경에 영향받지 않는 구조인
+     반면, UI Toolkit 쪽에는 그런 배경을 실제로 채우는 UI가 없어서 Camera 배경색을 그대로 따라가는
+     것이라는 지적입니다. uGUI Basic Usage Scene의 Camera 추가는 **완전히 되돌렸고**(패키지 저장소는
+     `git checkout --`로, TestProject 임포트본은 사용자가 이미 열어둔 상태라 그 Camera 삽입분만
+     수동으로 제거), **uGUI Basic Usage는 더 이상 건드리지 않습니다.** 남은 배경색 문제가 있다면
+     UI Toolkit 쪽(Scene의 `Main Camera` 배경값 또는 Panel 자체의 배경 커버리지)에서만 계속
+     조정합니다.
+   - **`safe-area-panel` 크기 0 버그(2026-08-18)**: uGUI Camera를 되돌린 뒤 사용자가 "header 빼고
+     전부 Camera 배경색(검정)으로 보인다"고 재보고했습니다 — `safe-area-panel`의 초록 배경 자체가
+     전혀 그려지지 않고 있었습니다. `body-label` 제거로 이 요소가 완전히 빈 `VisualElement`가 된
+     뒤로, `position: Absolute` + `left`/`right`/`top`/`bottom`만 런타임에 설정하고 `width`/`height`를
+     USS에 명시하지 않아 레이아웃 엔진이 자식 없는 이 요소의 크기를 0으로 계산했던 것으로 보입니다.
+     프레임 누적 버그가 있던 동안에는 이전(라벨이 있던 시절) 렌더링 결과가 잔상으로 남아 있어 실제로
+     배경이 안 그려지고 있다는 게 가려져 있었습니다. USS에 `width: 100%; height: 100%;`를 기본값으로
+     명시해 해결(런타임 insets가 이후 이 값을 안전 영역 크기로 덮어씀). **사용자가 Unity에서 재확인 —
+     배경이 정상적으로 다시 그려지고 프레임 누적 현상도 없음을 확인했습니다.**
+   - **색상/글자 크기 미세 차이는 대응 범위 밖으로 확정(2026-08-18)**: 위 수정 후에도 uGUI와 UI
+     Toolkit의 초록/파랑 색상이 미묘하게 다르고(스크린샷 대조 결과 UI Toolkit 쪽이 더 탁하게 보임 —
+     원인 후보로 URP Camera 렌더 경로의 색공간 변환을 의심했으나 `DefaultVolumeProfile`엔 Tonemapping
+     등 컴포넌트가 없어(`components: []`) 미확정) Header 글자 크기도 근소하게 다릅니다(uGUI는 내장
+     legacy `Arial`, UI Toolkit Label은 기본 폰트라 폰트 시스템 자체가 달라 `28px` 지정에도 실제 줄
+     높이가 정확히 같지 않음). **사용자가 "SafeArea 인셋 대응 기능만 정상이면 충분하다"고 확정해 이
+     미세한 시각적 차이는 더 이상 쫓지 않기로 했습니다.** 완전 픽셀 단위 매칭이 필요해지면 다음
+     세션에서 Frame Debugger로 실제 블렌딩 경로를 직접 확인한 뒤 접근할 것(소스 분석만으로는 이
+     세션에서 한계에 도달함).
 5. **P2-01 — 화면 변화 감지 최적화**
    - 해상도, 방향, safe area가 실제로 바뀐 경우에만 레이아웃을 갱신합니다.
 6. **P3-01 — PreviewScene 유지 (복원, Unity 검증 완료 2026-08-14)**
