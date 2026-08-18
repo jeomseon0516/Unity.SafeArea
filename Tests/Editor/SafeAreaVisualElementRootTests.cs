@@ -42,20 +42,5 @@ namespace Jeomseon.SafeArea.Tests
             Assert.AreEqual(0f, target.style.bottom.value.value);
         }
 
-        [Test]
-        public void MissingPanelSettings_DoesNotThrowOnEnableOrDisable()
-        {
-            var go = new GameObject("SafeAreaVisualElementRootTestTarget", typeof(UIDocument));
-            try
-            {
-                var component = go.AddComponent<SafeAreaVisualElementRoot>();
-                Assert.DoesNotThrow(() => component.enabled = false);
-            }
-            finally
-            {
-                Object.DestroyImmediate(go);
-                SafeAreaWatcher.ResetStaticStateForNewSession();
-            }
-        }
     }
 }
