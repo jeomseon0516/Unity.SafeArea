@@ -2,20 +2,11 @@
 
 uGUI(`RectTransform`/`LayoutGroup`) 기반 [Basic Usage](../BasicUsage) 예제와 달리, 이 예제는 UI
 Toolkit(`UIDocument`/`VisualElement`)에서 `SafeAreaVisualElementRoot`/`SafeAreaVisualElementPadding`을
-쓰는 법을 보여줍니다.
+쓰는 법을 보여줍니다. 색상·텍스트·레이아웃을 Basic Usage와 시각적으로 1:1 대응하도록 맞췄습니다 —
+API만 uGUI/UI Toolkit으로 다를 뿐 같은 화면이 나와야 정상입니다.
 
-## Scene 재생성 (선택)
-
-`UIDocument`/`PanelSettings`는 Unity native 모듈 타입이라 `.unity`를 손으로 작성하면 classID를
-잘못 추측해 컴포넌트가 깨질 위험이 있습니다. 대신 Unity 메뉴로 생성합니다.
-
-패키지에는 Unity 6000.5.7f1이 생성한 `PanelSettings.asset`과
-`SafeAreaUIToolkitSample.unity`가 포함됩니다. 다시 생성하려면 두 파일과 각 `.meta`를 삭제한 뒤:
-
-1. `Jeomseon/Safe Area/Setup UI Toolkit Sample` 메뉴를 실행합니다.
-2. 이 폴더에 두 자산이 다시 생성되는지 확인합니다.
-
-이미 생성돼 있다면(예: 패키지에 커밋된 상태로 받았다면) 이 메뉴는 아무것도 하지 않고 건너뜁니다.
+패키지에는 Unity 6000.5.7f1이 생성한 `PanelSettings.asset`과 `SafeAreaUIToolkitSample.unity`가
+이미 포함돼 있습니다. Import 후 별도 Setup 실행 없이 바로 열어 확인할 수 있습니다.
 
 ## Scene 구성
 
