@@ -1,6 +1,6 @@
 # 변경 기록
 
-## [Unreleased]
+## [0.3.1] - 2026-08-18
 
 - UI Toolkit 샘플의 `Jeomseon/Safe Area/Setup UI Toolkit Sample` 메뉴를 제거했습니다. 커밋된
   `PanelSettings.asset`/`SafeAreaUIToolkitSample.unity`가 이미 Unity 자체 직렬화 결과이므로,
