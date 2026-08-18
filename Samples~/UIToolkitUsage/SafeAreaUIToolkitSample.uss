@@ -1,6 +1,13 @@
 .safe-area-panel {
-    /* position/left/right/top/bottom는 SafeAreaVisualElementRoot가 런타임에 채운다(uGUI
-       SafeAreaRoot의 anchor에 대응 — 배경이 실제로 안전 영역 크기로 줄어든다). */
+    /* left/right/top/bottom는 SafeAreaVisualElementRoot가 런타임에 채운다(uGUI SafeAreaRoot의
+       anchor에 대응 — 배경이 실제로 안전 영역 크기로 줄어든다). uGUI Basic Usage의 Safe Area
+       Panel과 동일하게 콘텐츠 없이 배경색만 있다. 자식이 전혀 없는 상태로 position: Absolute +
+       left/right/top/bottom만 런타임에 설정하면 레이아웃 엔진이 크기를 0으로 계산할 수 있어,
+       width/height 100%를 기본값으로 명시해 항상 유효한 크기를 갖도록 한다(런타임에 적용되는
+       insets가 이후 이 값을 덮어써 실제 안전 영역 크기로 좁힌다). */
+    position: absolute;
+    width: 100%;
+    height: 100%;
     background-color: rgba(51, 204, 77, 0.35);
 }
 
@@ -17,12 +24,8 @@
 }
 
 .header-label {
+    /* uGUI Basic Usage의 Header Label(fontSize 28, bold)과 동일하게 맞춘다. */
+    font-size: 28px;
     color: rgb(255, 255, 255);
     -unity-font-style: bold;
-}
-
-.body-label {
-    color: rgb(255, 255, 255);
-    margin: 16px;
-    white-space: normal;
 }

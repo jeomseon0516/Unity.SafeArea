@@ -2,6 +2,51 @@
 
 ## [Unreleased]
 
+- UI Toolkit 샘플의 `Jeomseon/Safe Area/Setup UI Toolkit Sample` 메뉴를 제거했습니다. 커밋된
+  `PanelSettings.asset`/`SafeAreaUIToolkitSample.unity`가 이미 Unity 자체 직렬화 결과이므로,
+  Import 후 이 메뉴는 항상 "이미 있음"만 로그로 남기고 아무 것도 하지 않는 no-op이었습니다.
+  Setup 스크립트와 전용 Editor asmdef를 통째로 제거해 Import 후 바로 Scene을 열어 확인할 수
+  있습니다.
+- **(버그 수정)** UI Toolkit 샘플에서 `header`(반투명 오버레이)가 `safe-area-panel`의 콘텐츠
+  (`body-label`) 위에 겹쳐 보이던 문제를 고쳤습니다. `header`는 같은 안전 영역 top 인셋에 자기
+  `basePaddingTop`(8px)과 라벨 높이가 더해져 `safe-area-panel`의 top(순수 인셋값)보다 항상 더
+  아래까지 내려오는데, `safe-area-panel`에는 그 여백이 없어 header의 반투명 배경과 panel의 텍스트가
+  뒤섞여 보였습니다.
+- uGUI Basic Usage 샘플과 시각적으로 1:1 대응하도록 UI Toolkit 샘플을 정리했습니다.
+  `safe-area-panel`에서 `body-label`을 제거해 uGUI의 `Safe Area Panel`(콘텐츠 없이 배경색만)과
+  구조를 맞췄고, `header-label` 텍스트를 `"Safe Area Header"`로 맞췄습니다(uGUI Label은
+  `"Safe Area Header (SafeAreaPadding, useTop)"`이 실제 텍스트지만 고정 `400x60` 박스의 Vertical
+  Overflow: Truncate로 두 번째 줄이 항상 잘려 화면엔 `"Safe Area Header"`만 보임 — 실제 렌더링
+  기준으로 맞춤). 글자 크기도 uGUI Header Label과 동일한 `28px`로 맞췄고,
+  `SafeAreaVisualElementPadding`의 `basePaddingTop`/`basePaddingBottom`을 uGUI Header의
+  `VerticalLayoutGroup` 기준 padding(Top 0, Bottom 0)에 맞춰 `8`→`0`으로 조정했습니다(좌우 `16`은
+  uGUI와 이미 일치). `body-label`이 사라지며 위 겹침 버그의 원인 자체가 없어졌습니다.
+- UI Toolkit 샘플의 색상이 uGUI Basic Usage와 같은 RGBA 값인데도 실제로는 다르게 보이는 문제를
+  완화했습니다. 프로젝트가 Linear 컬러 스페이스(`m_ActiveColorSpace: 1`)인데, uGUI `Canvas`는
+  `m_VertexColorAlwaysGammaSpace: 1`로 항상 Gamma 공간에서 블렌딩하는 반면 UI Toolkit
+  `PanelSettings`는 `forceGammaRendering: 0`(Linear 블렌딩)이었던 걸 `1`로 바꿔 uGUI와 같은 방식으로
+  블렌딩하도록 맞췄습니다. **다만 이후에도 미세한 색상 차이가 남아 있음이 확인됐습니다** — 아래
+  "색상/글자 크기 미세 차이" 항목 참고.
+- **(버그 수정)** UI Toolkit 샘플에서 `header`가 여러 프레임에 걸쳐 겹쳐 그려진 것처럼 색이 점점
+  진해져 보이는 문제를 고쳤습니다. Scene에 `Camera`가 전혀 없어 매 프레임 확실한 클리어 없이 UI
+  Toolkit 오버레이가 그려져 이전 프레임 결과 위에 반투명 색이 계속 누적된 것이었습니다(사용자가
+  Unity에서 재현 확인). `Main Camera`(Clear Flags: Solid Color)를 Scene에 추가해 매 프레임 확실히
+  클리어되도록 했습니다.
+- **(버그 수정)** `safe-area-panel`의 배경(초록)이 전혀 그려지지 않고 `header`(파랑)를 제외한 화면
+  전체가 Camera 배경색(검정)으로만 보이던 문제를 고쳤습니다. `body-label` 제거로 `safe-area-panel`이
+  완전히 빈 `VisualElement`가 됐는데, `position: Absolute` + `left`/`right`/`top`/`bottom`만
+  런타임에 설정하고 `width`/`height`를 USS에 명시하지 않아 레이아웃 엔진이 자식 없는 이 요소의
+  크기를 0으로 계산한 것으로 보입니다(이전에는 프레임 누적 버그 때문에 예전 렌더링 결과가 잔상으로
+  남아 있어 실제로는 안 그려지고 있다는 게 가려져 있었음). USS에 `width: 100%; height: 100%;`를
+  기본값으로 명시해 항상 유효한 크기를 갖도록 했습니다(런타임 insets가 이후 이 값을 안전 영역
+  크기로 덮어씀). **사용자가 Unity에서 재확인 — 배경이 정상적으로 다시 그려지고 프레임 누적도
+  사라짐을 확인했습니다.**
+- 위 수정들 이후에도 uGUI Basic Usage와 UI Toolkit 샘플의 색상(다소 탁하게 보임)·Header 글자 크기가
+  미묘하게 다르다는 걸 사용자가 스크린샷으로 확인했습니다. 원인 후보(URP 색공간 변환, 폰트 시스템
+  차이)는 짚었지만 이 세션에서 소스 분석만으로는 완전히 특정하지 못했고, **사용자가 "Safe Area 인셋
+  대응 기능만 정상이면 충분하다"고 확정해 더 이상 쫓지 않기로 했습니다.** 기능(Root/Padding의 실제
+  안전 영역 반영)은 정상 동작 확인됨 — 남은 건 순수 시각적 미세 차이입니다.
+
 ## [0.3.0] - 2026-08-17
 
 - **(버그 수정)** `SafeAreaPreviewWindow`에서 Override 값을 바꾸고 "Apply & Rebuild Preview"를

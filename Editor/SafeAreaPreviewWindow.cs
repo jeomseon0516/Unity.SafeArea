@@ -283,8 +283,8 @@ namespace Jeomseon.Unity.SafeArea.Editor
 
             _previewScene = EditorSceneManager.NewPreviewScene();
 
-            var camGO = new GameObject("SafeAreaPreviewCamera");
-            _previewCamera = camGO.AddComponent<Camera>();
+            var camGo = new GameObject("SafeAreaPreviewCamera");
+            _previewCamera = camGo.AddComponent<Camera>();
             _previewCamera.clearFlags = CameraClearFlags.Skybox;   // 요청대로 Skybox
             _previewCamera.backgroundColor = Color.gray;
             _previewCamera.orthographic = true;
@@ -294,7 +294,7 @@ namespace Jeomseon.Unity.SafeArea.Editor
             _previewCamera.enabled = true;
             _previewCamera.cameraType = CameraType.Game;
 
-            SceneManager.MoveGameObjectToScene(camGO, _previewScene);
+            SceneManager.MoveGameObjectToScene(camGo, _previewScene);
 
             ulong sceneMask = EditorSceneManager.GetSceneCullingMask(_previewScene);
             _previewCamera.overrideSceneCullingMask = sceneMask;
