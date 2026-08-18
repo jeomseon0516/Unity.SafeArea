@@ -55,20 +55,5 @@ namespace Jeomseon.SafeArea.Tests
                 "useTop이 꺼져 있으면 inset과 무관하게 베이스 padding만 유지해야 함");
         }
 
-        [Test]
-        public void MissingPanelSettings_DoesNotThrowOnEnableOrDisable()
-        {
-            var go = new GameObject("SafeAreaVisualElementPaddingTestTarget", typeof(UIDocument));
-            try
-            {
-                var component = go.AddComponent<SafeAreaVisualElementPadding>();
-                Assert.DoesNotThrow(() => component.enabled = false);
-            }
-            finally
-            {
-                Object.DestroyImmediate(go);
-                SafeAreaWatcher.ResetStaticStateForNewSession();
-            }
-        }
     }
 }

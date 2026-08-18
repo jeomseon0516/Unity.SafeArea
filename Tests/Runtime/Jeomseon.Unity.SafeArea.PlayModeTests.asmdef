@@ -1,0 +1,19 @@
+{
+  "name": "Jeomseon.Unity.SafeArea.PlayModeTests",
+  "rootNamespace": "Jeomseon.SafeArea.Tests",
+  "references": [
+    "Jeomseon.Unity.SafeArea"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}
