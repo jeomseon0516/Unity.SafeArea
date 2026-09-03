@@ -98,8 +98,8 @@ namespace Jeomseon.Unity.SafeArea.Editor
 
             float statusWidth = Mathf.Clamp(rowRight - targetToggleRight - gap, 0f, statusMaxWidth);
             var statusRect = new Rect(rowRight - statusWidth, args.rowRect.y, statusWidth, args.rowRect.height);
-            if (statusWidth > 40f)
-                GUI.Label(statusRect, entry.Validation.Message, EditorStyles.miniLabel);
+            if (statusWidth >= 1f)
+                GUI.Label(statusRect, entry.Validation.Message, EditorStyles.miniLabel); // IMGUI clips to the rect
 
             float ignoreClusterLeft = statusRect.x - gap - ignoreLabelWidth - ignoreToggleWidth - 2f;
             if (ignoreClusterLeft > targetToggleRight + gap)
@@ -108,8 +108,9 @@ namespace Jeomseon.Unity.SafeArea.Editor
                 var ignoreLabelRect = new Rect(
                     ignoreClusterLeft + ignoreToggleWidth + 2f, args.rowRect.y, ignoreLabelWidth, args.rowRect.height);
 
-                // A Canvas that cannot take SafeArea (World Space, invalid) cannot be
-                // runtime-patched either, so its Runtime Ignore marker is meaningless.
+                // A Canvas that cannot be patched at all has nothing for the runtime
+                // ignore marker to act on; disable it to stay consistent with the
+                // target toggle above.
                 using (new EditorGUI.DisabledScope(!entry.Validation.CanChange))
                 {
                     EditorGUI.BeginChangeCheck();
