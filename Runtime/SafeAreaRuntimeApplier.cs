@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 namespace Jeomseon.Unity.SafeArea
 {
     /// <summary>
-    /// 런타임에만 Canvas들을 SafeAreaRoot로 감싸는 자동 패처.
+    /// 런타임에만 Canvas들을 공식 uGUI Safe Area 컨테이너로 감싸는 자동 패처.
     /// (에디터에서 씬 구조를 영구 수정하지 않음)
     /// </summary>
     public static class SafeAreaRuntimeApplier
@@ -31,7 +31,7 @@ namespace Jeomseon.Unity.SafeArea
         }
 
         /// <summary>
-        /// 현재 로드된 모든 Canvas에 SafeAreaRoot를 붙인다. SafeAreaSettings.AutoPatchRuntimeCanvases
+        /// 현재 로드된 모든 Canvas에 공식 uGUI Safe Area를 붙인다. SafeAreaSettings.AutoPatchRuntimeCanvases
         /// 설정과 무관하게 항상 동작하는 명시적 진입점이다.
         /// </summary>
         public static void ApplyToAllCanvases()
@@ -40,7 +40,10 @@ namespace Jeomseon.Unity.SafeArea
             var canvases = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include);
             foreach (var canvas in canvases)
             {
-                SafeAreaPatchCore.EnsureSafeAreaRoot(canvas, settings);
+                if (canvas.TryGetComponent<SafeAreaIgnore>(out _))
+                    continue;
+
+                SafeAreaPatchCore.EnsureSafeAreaContainer(canvas, settings);
             }
         }
     }

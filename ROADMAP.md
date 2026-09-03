@@ -2,6 +2,31 @@
 
 우선순위: `P0` 결함·안전성 → `P1` 핵심 구조 → `P2` API·성능 → `P3` 장기 확장
 
+## Unity 6000.6 공식 uGUI Safe Area 전환 (2026-09-02)
+
+- uGUI 2.6의 `UnityEngine.UI.SafeArea`가 기존 `SafeAreaRoot`의 anchor/offset 적용, 화면·방향·safeArea
+  변경 감지를 완전히 대체하고 reference orientation, edge remapping, 중앙 정렬과
+  `DrivenRectTransformTracker` 소유권까지 제공하므로 자체 `SafeAreaRoot`를 제거했습니다.
+- Runtime/Scene 패처와 Basic Usage Scene은 공식 컴포넌트를 사용합니다. 기존 네 방향 bool은 공식
+  `Edges` 플래그로 이전하며 호환 별칭은 유지하지 않습니다.
+- `SafeAreaPadding`, UI Toolkit Root/Padding, Canvas 패치 정책은 공식 컴포넌트에 없는 별도 의미가
+  있어 유지합니다. Preview Window는 공식 컴포넌트 설정을 읽되 가상 safeArea는 격리된 PreviewScene의
+  RectTransform에 Editor 전용 계산으로 적용합니다.
+- 최소 버전을 Unity `6000.6.0f1`, uGUI `2.6.0`으로 상향했습니다. Unity 6000.6에서 EditMode 13/13,
+  PlayMode 2/2를 통과했습니다. Basic Usage와 Preview Window 육안 확인은 남아 있습니다.
+
+## Scene Patcher 관리 창 (2026-09-03, Unity 검증 대기)
+
+- `Patch Active Scene`이 Scene을 즉시 변경하지 않고 `SafeAreaPatcherWindow`를 엽니다. 실제 Hierarchy와
+  같은 펼침/접힘 TreeView에서 Canvas별 목표 상태를 고른 뒤 `Apply Changes`로 추가·제거를 일괄 적용하고
+  Undo할 수 있습니다.
+- 적용 가능 여부는 별도 `SafeAreaPatchValidator`가 판단합니다. World Space 설정, 유효하지 않은 Scene,
+  여러 하위 `SafeArea`를 가진 모호한 Canvas는 사유를 표시하고 SafeArea 변경 대상에서 제외합니다.
+  `SafeAreaIgnore`는 런타임 패치 예외 상태이므로 별도 체크박스로 추가·제거합니다.
+- `SafeAreaIgnoreEditor`는 별도 `SafeAreaIgnoreValidator`를 사용해 같은 GameObject에 Canvas가 없는
+  무효 구성을 Inspector HelpBox로 경고합니다.
+- 체크 해제 후 재적용할 때는 기존 이름의 컨테이너를 재사용해 Wrapper가 중첩되지 않습니다.
+
 ## 테스트 모드 정리 (2026-08-18, Unity 검증 대기)
 
 - UI Toolkit 컴포넌트의 `OnEnable`/`OnDisable` 예외 안전성 테스트를 EditMode에서 제거하고 실제
@@ -97,6 +122,9 @@
      맞춤), 글자 크기를 uGUI와 동일한 `28px`로, `SafeAreaVisualElementPadding`의
      `basePaddingTop`/`basePaddingBottom`을 uGUI Header `VerticalLayoutGroup`의 padding(Top 0,
      Bottom 0) 기준에 맞춰 `8`→`0`으로 조정(좌우 `16`은 이미 일치)했습니다.
+   - **Basic Usage Label 중앙 정렬(2026-09-03)**: uGUI Sample의 Header 부모는 중앙 배치였지만
+     자식 `Label`의 Text Anchor가 `Middle Left`로 남아 텍스트가 화면 왼쪽으로 치우쳤습니다.
+     Text Anchor를 `Middle Center`로 변경해 UI Toolkit Sample과 같은 중앙 정렬로 맞췄습니다.
    - **Gamma/Linear 색상 불일치 수정(2026-08-18)**: 텍스트/구조를 맞춘 뒤에도 사용자가 "색상이 다르다"고
      지적했습니다. 두 Scene 다 Camera가 없어 배경 차이는 아니었고, `ProjectSettings.asset`의
      `m_ActiveColorSpace: 1`(Linear)을 확인한 뒤 uGUI `Canvas`의 `m_VertexColorAlwaysGammaSpace: 1`
@@ -153,6 +181,12 @@
      동기화에는 사용하지 않습니다.
    - Unity에서 Preview Window 렌더링, 원본 Scene 불변, Play Mode/ContentSizeFitter 리그레션까지
      전부 재확인 완료(2026-08-14, 사용자 확인).
+   - **Safe Area 가시화 개선(2026-09-03)**: 색만으로 영역을 구분하던 Preview는 적용 여부와 inset
+     방향을 판단하기 어려웠습니다. 안전 영역에 `SAFE AREA` 좌표 배지와 초록 경계선을 표시하고,
+     제외 영역에는 `UNSAFE TOP/BOTTOM/LEFT/RIGHT` 및 inset 픽셀값을 직접 표시합니다. 제어 패널에도
+     적용 중인 입력(Simulator/Override)과 L/R/T/B inset을 노출하며 Overlay를 끌 수 있습니다.
+     Preview Camera는 반투명 UI 색상을 프로젝트 Skybox와 섞지 않도록 Solid Color 검정 배경을
+     사용합니다. 화면 좌표에서 Editor GUI 좌표로 변환하는 계산은 EditMode 테스트로 고정했습니다.
 7. **P3-02 — UI Toolkit Preview Window (백로그, 미착수)**
    - 현재 Preview Window는 uGUI(`SafeAreaRoot`/`SafeAreaPadding`) 전용이고, UI Toolkit
      (`SafeAreaVisualElementRoot`/`SafeAreaVisualElementPadding`)에는 대응하는 Preview 기능이

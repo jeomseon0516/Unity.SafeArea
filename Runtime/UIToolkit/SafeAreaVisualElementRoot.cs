@@ -4,7 +4,7 @@ using UnityEngine.UIElements;
 namespace Jeomseon.Unity.SafeArea.UIToolkit
 {
     /// <summary>
-    /// <see cref="SafeArea.SafeAreaRoot"/>의 UI Toolkit 대응. RectTransform의 anchor 대신
+    /// 공식 uGUI <see cref="UnityEngine.UI.SafeArea"/>의 UI Toolkit 대응. RectTransform의 anchor 대신
     /// <see cref="Position.Absolute"/> + <c>left</c>/<c>right</c>/<c>top</c>/<c>bottom</c> 인셋으로
     /// 지정한 <see cref="VisualElement"/>의 박스 자체를 안전 영역 크기로 줄입니다.
     /// <see cref="SafeAreaVisualElementPadding"/>과 달리 배경도 함께 줄어듭니다(padding은 배경을

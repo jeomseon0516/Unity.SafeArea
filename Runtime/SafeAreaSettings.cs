@@ -17,7 +17,7 @@ namespace Jeomseon.Unity.SafeArea
         [SerializeField] private bool autoPatchRuntimeCanvases;
 
         /// <summary>
-        /// 패치 시 생성되는 SafeAreaRoot GameObject의 이름.
+        /// 패치 시 생성되는 공식 uGUI Safe Area 컨테이너 GameObject의 이름.
         /// </summary>
         public string RootName => string.IsNullOrEmpty(rootName) ? DefaultRootName : rootName;
 

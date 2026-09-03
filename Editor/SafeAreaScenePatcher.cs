@@ -9,7 +9,7 @@ using Jeomseon.Unity.SafeArea;
 namespace Jeomseon.Unity.SafeArea.Editor
 {
     /// <summary>
-    /// 에디터에서 실제 씬에 SafeAreaRoot를 붙여주는 Patcher.
+    /// 에디터에서 실제 씬에 공식 uGUI Safe Area를 붙여주는 Patcher.
     /// - 이걸 쓰면 런타임 AutoApplier 없이도 씬이 이미 SafeArea 대응 상태가 됨.
     /// </summary>
     public static class SafeAreaScenePatcher
@@ -17,18 +17,11 @@ namespace Jeomseon.Unity.SafeArea.Editor
         [MenuItem("Jeomseon/Safe Area/Patch Active Scene")]
         public static void PatchActiveScene()
         {
-            var scene = SceneManager.GetActiveScene();
-            if (!scene.isLoaded)
-            {
-                Debug.LogWarning("[SafeAreaScenePatcher] No active scene loaded.");
-                return;
-            }
-
-            PatchScene(scene, useUndo: true);
+            SafeAreaPatcherWindow.ShowWindow();
         }
 
         /// <summary>
-        /// 특정 Scene에 포함된 Canvas들을 SafeAreaRoot로 감싼다.
+        /// 특정 Scene에 포함된 Canvas들을 공식 uGUI Safe Area 컨테이너로 감싼다.
         /// useUndo가 true면 Undo 히스토리에 남긴다.
         /// </summary>
         public static void PatchScene(Scene scene, bool useUndo)
@@ -40,10 +33,16 @@ namespace Jeomseon.Unity.SafeArea.Editor
                 var canvases = root.GetComponentsInChildren<Canvas>(true);
                 foreach (var canvas in canvases)
                 {
+                    // Honor the same runtime-patch exception the runtime applier and
+                    // the Patcher window use, so PatchScene does not silently patch a
+                    // Canvas the project marked as ignored.
+                    if (canvas.TryGetComponent<SafeAreaIgnore>(out _))
+                        continue;
+
                     if (useUndo)
                         Undo.RegisterFullObjectHierarchyUndo(canvas.gameObject, "Patch SafeArea Canvas");
 
-                    SafeAreaPatchCore.EnsureSafeAreaRoot(canvas, settings);
+                    SafeAreaPatchCore.EnsureSafeAreaContainer(canvas, settings);
 
                     if (useUndo)
                         EditorUtility.SetDirty(canvas);

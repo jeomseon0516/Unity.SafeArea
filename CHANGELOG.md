@@ -1,5 +1,25 @@
 # 변경 기록
 
+## [Unreleased]
+
+- **(Breaking)** 자체 `SafeAreaRoot`를 제거하고 uGUI 2.6의 공식 `UnityEngine.UI.SafeArea`로
+  전환했습니다. Runtime/Scene 패처와 Basic Usage Scene은 공식 컴포넌트를 사용하며, 기존 네 방향
+  bool은 공식 `Edges` 플래그로 이전합니다(호환 별칭 없음). `SafeAreaPadding`, UI Toolkit
+  Root/Padding, Canvas 패치 정책은 공식 API에 없는 의미라 유지합니다.
+- Unity 최소 버전을 `6000.6.0f1`, `com.unity.ugui` 최소 의존성을 `2.6.0`으로 올렸습니다.
+- Scene Patcher를 즉시 변경에서 관리 창(`SafeAreaPatcherWindow`)으로 바꿨습니다. 실제 Hierarchy와
+  같은 TreeView에서 Canvas별 목표 상태를 고른 뒤 `Apply Changes`로 Undo 가능한 일괄 적용을 합니다.
+  별도 `SafeAreaPatchValidator`가 World Space 설정·유효하지 않은 Scene·모호한 다중 `SafeArea`를
+  제외 사유와 함께 표시하고, `SafeAreaIgnore` 런타임 예외는 독립 체크박스로 관리합니다.
+- `SafeAreaIgnore` 전용 UI Toolkit CustomEditor(`SafeAreaIgnoreEditor`)와 `SafeAreaIgnoreValidator`를
+  추가했습니다. 같은 GameObject에 Canvas가 없으면 Inspector HelpBox로 경고합니다.
+- Preview Window 가시화를 개선했습니다. 안전 영역에 `SAFE AREA` 좌표 배지·초록 경계선, 제외 영역에
+  `UNSAFE TOP/BOTTOM/LEFT/RIGHT`와 inset 픽셀값을 표시하고, 제어 패널에 적용 입력(Simulator/Override)과
+  L/R/T/B inset·Overlay 토글을 추가했습니다. Preview Camera는 Solid Color 검정 배경을 사용합니다.
+  화면 좌표 → Editor GUI 좌표 변환을 EditMode 테스트로 고정했습니다.
+- **검증**: Unity 6000.6.0f1에서 EditMode/PlayMode 관련 테스트 전부 PASS(2026-09-03 사용자 Test
+  Runner 확인). 신규 테스트 Canvas RenderMode를 Screen Space Overlay로 명시.
+
 ## [0.3.1] - 2026-08-18
 
 - UI Toolkit 샘플의 `Jeomseon/Safe Area/Setup UI Toolkit Sample` 메뉴를 제거했습니다. 커밋된

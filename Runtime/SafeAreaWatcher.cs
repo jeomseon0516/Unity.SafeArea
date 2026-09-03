@@ -11,7 +11,7 @@ namespace Jeomseon.Unity.SafeArea
     /// 
     /// 이 클래스는 카메라를 직접 건드리지 않고,
     /// SafeAreaChanged 이벤트만 브로드캐스트한다.
-    /// 구독자는 SafeAreaRoot, SafeAreaPadding 등.
+    /// 구독자는 SafeAreaPadding과 UI Toolkit 컴포넌트 등.
     /// </summary>
     public static class SafeAreaWatcher
     {

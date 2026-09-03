@@ -5,7 +5,7 @@ Toolkit(`UIDocument`/`VisualElement`)에서 `SafeAreaVisualElementRoot`/`SafeAre
 쓰는 법을 보여줍니다. 색상·텍스트·레이아웃을 Basic Usage와 시각적으로 1:1 대응하도록 맞췄습니다 —
 API만 uGUI/UI Toolkit으로 다를 뿐 같은 화면이 나와야 정상입니다.
 
-패키지에는 Unity 6000.5.7f1이 생성한 `PanelSettings.asset`과 `SafeAreaUIToolkitSample.unity`가
+패키지에는 Unity가 생성한 `PanelSettings.asset`과 `SafeAreaUIToolkitSample.unity`가
 이미 포함돼 있습니다. Import 후 별도 Setup 실행 없이 바로 열어 확인할 수 있습니다.
 
 ## Scene 구성
@@ -16,7 +16,7 @@ API만 uGUI/UI Toolkit으로 다를 뿐 같은 화면이 나와야 정상입니�
 - **safe-area-panel**(초록) — `SafeAreaVisualElementRoot`(`useLeft`/`useRight`/`useTop`/
   `useBottom` 전부 켬)가 붙어 있습니다. `position: Absolute` + `left`/`right`/`top`/`bottom`
   인셋으로 **박스 자체(배경 포함)를 안전 영역 크기로 실제로 줄입니다** — uGUI 예제의
-  `SafeAreaRoot`(anchor 기반)와 동일한 역할입니다.
+  공식 uGUI `SafeArea`(anchor 기반)와 동일한 역할입니다.
 - **header**(파랑) — `useTop`만 켠 `SafeAreaVisualElementPadding`이 붙어 있습니다. USS로 화면
   상단에 항상 고정(`position: Absolute; top: 0;`)되고, **내부 padding.top만** 안전 영역
   인셋만큼 늘어납니다(배경 자체는 줄어들지 않고 화면 최상단까지 깔림 — 웹의
@@ -43,6 +43,6 @@ API만 uGUI/UI Toolkit으로 다를 뿐 같은 화면이 나와야 정상입니�
 4. Play Mode 중에 Device Simulator에서 디바이스를 바꿔가며 `header`/`safe-area-panel`이 즉시
    재적용되는지 확인합니다(런타임에는 `SafeAreaWatcher`가 매 프레임 `Screen.safeArea` 변화를
    감지해 이벤트로 알려줍니다). 참고로 이 두 컴포넌트는 `[ExecuteAlways]`인 uGUI
-   `SafeAreaRoot`/`SafeAreaPadding`과 달리 `OnValidate`가 없어 **Edit Mode에서는 컴포넌트가
+   공식 uGUI `SafeArea`/`SafeAreaPadding`과 달리 `OnValidate`가 없어 **Edit Mode에서는 컴포넌트가
    활성화되는 시점(Scene 로드 등)에만 한 번 적용**됩니다 — Edit Mode에서 디바이스를 바꿔도 즉시
    갱신되지 않는 것이 정상입니다.
