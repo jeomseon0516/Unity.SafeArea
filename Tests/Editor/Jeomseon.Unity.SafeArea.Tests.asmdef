@@ -3,6 +3,7 @@
   "rootNamespace": "Jeomseon.SafeArea.Tests",
   "references": [
     "Jeomseon.Unity.SafeArea",
+    "Jeomseon.Unity.SafeArea.Editor",
     "UnityEngine.UI"
   ],
   "optionalUnityReferences": ["TestAssemblies"],

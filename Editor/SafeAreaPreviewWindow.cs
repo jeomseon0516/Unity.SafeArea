@@ -37,6 +37,7 @@ namespace Jeomseon.Unity.SafeArea.Editor
         private Scene _previewScene;
         private Camera _previewCamera;
         private RenderTexture _rt;
+        private bool _showSafeAreaOverlay = true;
 
         // 디버그용
         private int _srcCanvasCount;
@@ -47,6 +48,9 @@ namespace Jeomseon.Unity.SafeArea.Editor
         // =====================================================================
 
         private const float ControlPanelWidth = 340f;
+        private static readonly Color UnsafeAreaOverlayColor = new(0.85f, 0.12f, 0.08f, 0.22f);
+        private static readonly Color SafeAreaBorderColor = new(0.2f, 1f, 0.35f, 1f);
+        private static readonly Color SafeAreaBadgeColor = new(0.02f, 0.08f, 0.03f, 0.88f);
 
         [MenuItem("Jeomseon/Safe Area/Preview Window")]
         public static void ShowWindow()
@@ -148,8 +152,10 @@ namespace Jeomseon.Unity.SafeArea.Editor
                 // ----- 왼쪽: 컨트롤 패널 -----
                 using (new EditorGUILayout.VerticalScope(GUILayout.Width(ControlPanelWidth)))
                 {
-                    EditorGUILayout.LabelField($"Source canvases  : {_srcCanvasCount}");
-                    EditorGUILayout.LabelField($"Preview canvases : {_previewCanvasCount}");
+                    EditorGUILayout.LabelField("Preview Status", EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField("Input", _overrideEnabled ? "Override" : "Simulator");
+                    EditorGUILayout.LabelField("Source Canvases", _srcCanvasCount.ToString());
+                    EditorGUILayout.LabelField("Preview Canvases", _previewCanvasCount.ToString());
 
                     if (_previewScene.IsValid())
                     {
@@ -163,6 +169,19 @@ namespace Jeomseon.Unity.SafeArea.Editor
                         EditorGUILayout.LabelField($"Camera enabled: {_previewCamera.enabled}");
                         EditorGUILayout.LabelField($"Camera active: {_previewCamera.gameObject.activeInHierarchy}");
                     }
+
+                    EditorGUILayout.Space();
+
+                    var effectiveScreenSize = GetEffectiveScreenSize();
+                    var effectiveSafeArea = GetEffectiveSafeArea();
+                    var insets = GetSafeAreaInsets(effectiveScreenSize, effectiveSafeArea);
+                    EditorGUILayout.LabelField("Applied Safe Area", EditorStyles.boldLabel);
+                    EditorGUILayout.Vector2Field("Screen (px)", effectiveScreenSize);
+                    EditorGUILayout.RectField("Safe Area (px)", effectiveSafeArea);
+                    EditorGUILayout.LabelField(
+                        "Insets (L / R / T / B)",
+                        $"{insets.x:0} / {insets.y:0} / {insets.z:0} / {insets.w:0}");
+                    _showSafeAreaOverlay = EditorGUILayout.Toggle("Show Safe Area Overlay", _showSafeAreaOverlay);
 
                     EditorGUILayout.Space();
 
@@ -285,8 +304,8 @@ namespace Jeomseon.Unity.SafeArea.Editor
 
             var camGo = new GameObject("SafeAreaPreviewCamera");
             _previewCamera = camGo.AddComponent<Camera>();
-            _previewCamera.clearFlags = CameraClearFlags.Skybox;   // 요청대로 Skybox
-            _previewCamera.backgroundColor = Color.gray;
+            _previewCamera.clearFlags = CameraClearFlags.SolidColor;
+            _previewCamera.backgroundColor = Color.black;
             _previewCamera.orthographic = true;
             _previewCamera.nearClipPlane = 0.1f;
             _previewCamera.farClipPlane = 100f;
@@ -417,7 +436,90 @@ namespace Jeomseon.Unity.SafeArea.Editor
             if (Event.current.type == EventType.Repaint)
             {
                 GUI.DrawTexture(previewRect, _rt, ScaleMode.StretchToFill, false);
+
+                if (_showSafeAreaOverlay)
+                    DrawSafeAreaOverlay(previewRect, screenSize, GetEffectiveSafeArea());
             }
+        }
+
+        private static Vector4 GetSafeAreaInsets(Vector2 screenSize, Rect safeArea)
+        {
+            var left = Mathf.Max(0f, safeArea.xMin);
+            var right = Mathf.Max(0f, screenSize.x - safeArea.xMax);
+            var top = Mathf.Max(0f, screenSize.y - safeArea.yMax);
+            var bottom = Mathf.Max(0f, safeArea.yMin);
+            return new Vector4(left, right, top, bottom);
+        }
+
+        internal static Rect CalculatePreviewSafeAreaRect(Rect previewRect, Vector2 screenSize, Rect safeArea)
+        {
+            if (screenSize.x <= 0f || screenSize.y <= 0f)
+                return previewRect;
+
+            var xMin = Mathf.Clamp(safeArea.xMin, 0f, screenSize.x);
+            var xMax = Mathf.Clamp(safeArea.xMax, xMin, screenSize.x);
+            var yMin = Mathf.Clamp(safeArea.yMin, 0f, screenSize.y);
+            var yMax = Mathf.Clamp(safeArea.yMax, yMin, screenSize.y);
+
+            return new Rect(
+                previewRect.x + previewRect.width * xMin / screenSize.x,
+                previewRect.y + previewRect.height * (1f - yMax / screenSize.y),
+                previewRect.width * (xMax - xMin) / screenSize.x,
+                previewRect.height * (yMax - yMin) / screenSize.y);
+        }
+
+        private static void DrawSafeAreaOverlay(Rect previewRect, Vector2 screenSize, Rect safeArea)
+        {
+            var safeRect = CalculatePreviewSafeAreaRect(previewRect, screenSize, safeArea);
+            var insets = GetSafeAreaInsets(screenSize, safeArea);
+
+            DrawUnsafeArea(
+                new Rect(previewRect.x, previewRect.y, previewRect.width, safeRect.y - previewRect.y),
+                $"UNSAFE TOP  {insets.z:0}px");
+            DrawUnsafeArea(
+                new Rect(previewRect.x, safeRect.yMax, previewRect.width, previewRect.yMax - safeRect.yMax),
+                $"UNSAFE BOTTOM  {insets.w:0}px");
+            DrawUnsafeArea(
+                new Rect(previewRect.x, safeRect.y, safeRect.x - previewRect.x, safeRect.height),
+                $"UNSAFE LEFT\n{insets.x:0}px");
+            DrawUnsafeArea(
+                new Rect(safeRect.xMax, safeRect.y, previewRect.xMax - safeRect.xMax, safeRect.height),
+                $"UNSAFE RIGHT\n{insets.y:0}px");
+
+            const float borderWidth = 2f;
+            EditorGUI.DrawRect(new Rect(safeRect.x, safeRect.y, safeRect.width, borderWidth), SafeAreaBorderColor);
+            EditorGUI.DrawRect(new Rect(safeRect.x, safeRect.yMax - borderWidth, safeRect.width, borderWidth), SafeAreaBorderColor);
+            EditorGUI.DrawRect(new Rect(safeRect.x, safeRect.y, borderWidth, safeRect.height), SafeAreaBorderColor);
+            EditorGUI.DrawRect(new Rect(safeRect.xMax - borderWidth, safeRect.y, borderWidth, safeRect.height), SafeAreaBorderColor);
+
+            var badgeRect = new Rect(safeRect.x + 8f, safeRect.y + 8f, 230f, 36f);
+            badgeRect.width = Mathf.Min(badgeRect.width, Mathf.Max(0f, safeRect.width - 16f));
+            if (badgeRect.width <= 1f)
+                return;
+
+            EditorGUI.DrawRect(badgeRect, SafeAreaBadgeColor);
+            var labelRect = new Rect(badgeRect.x + 6f, badgeRect.y + 2f, badgeRect.width - 12f, badgeRect.height - 4f);
+            GUI.Label(
+                labelRect,
+                $"SAFE AREA\n{safeArea.x:0}, {safeArea.y:0}, {safeArea.width:0}, {safeArea.height:0} px",
+                EditorStyles.whiteMiniLabel);
+        }
+
+        private static void DrawUnsafeArea(Rect rect, string label)
+        {
+            if (rect.width <= 0f || rect.height <= 0f)
+                return;
+
+            EditorGUI.DrawRect(rect, UnsafeAreaOverlayColor);
+            if (rect.width < 54f || rect.height < 16f)
+                return;
+
+            var labelStyle = new GUIStyle(EditorStyles.whiteMiniLabel)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                wordWrap = true
+            };
+            GUI.Label(rect, label, labelStyle);
         }
 
         // =====================================================================
@@ -468,7 +570,7 @@ namespace Jeomseon.Unity.SafeArea.Editor
                     if (clone.TryGetComponent<Canvas>(out var cloneCanvas))
                     {
                         SetupCanvasForPreview(cloneCanvas);
-                        SafeAreaPatchCore.EnsureSafeAreaRoot(cloneCanvas, settings);
+                        SafeAreaPatchCore.EnsureSafeAreaContainer(cloneCanvas, settings);
                         _previewCanvasCount++;
                     }
                 }
@@ -525,7 +627,8 @@ namespace Jeomseon.Unity.SafeArea.Editor
         }
 
         /// <summary>
-        /// 현재 설정된 safeArea / screenSize를 PreviewScene 안의 SafeAreaRoot들에게만 적용.
+        /// 현재 설정된 safeArea / screenSize를 PreviewScene 안의 공식 uGUI SafeArea와
+        /// SafeAreaPadding에만 적용한다.
         /// 원본 씬은 건드리지 않는다.
         /// </summary>
         private void ApplyPreviewToScene()
@@ -539,10 +642,10 @@ namespace Jeomseon.Unity.SafeArea.Editor
             var roots = _previewScene.GetRootGameObjects();
             foreach (var root in roots)
             {
-                var safeAreaRoots = root.GetComponentsInChildren<SafeAreaRoot>(true);
-                foreach (var sr in safeAreaRoots)
+                var safeAreaComponents = root.GetComponentsInChildren<UnityEngine.UI.SafeArea>(true);
+                foreach (var component in safeAreaComponents)
                 {
-                    sr.ApplyPreview(safeArea, screenSize);
+                    ApplyPreview(component, safeArea, screenSize);
                 }
 
                 var safeAreaPaddings = root.GetComponentsInChildren<SafeAreaPadding>(true);
@@ -551,6 +654,59 @@ namespace Jeomseon.Unity.SafeArea.Editor
                     sp.ApplyPreview(safeArea, screenSize);
                 }
             }
+        }
+
+        private static void ApplyPreview(UnityEngine.UI.SafeArea component, Rect safeArea, Vector2 screenSize)
+        {
+            if (screenSize.x <= 0f || screenSize.y <= 0f)
+                return;
+
+            var edges = component.GetReferenceOrientationMappedDirection(component.Edges);
+            var min = safeArea.min;
+            var max = safeArea.max;
+
+            if ((edges & UnityEngine.UI.SafeArea.SafeAreaMode.Left) == 0)
+                min.x = 0f;
+            if ((edges & UnityEngine.UI.SafeArea.SafeAreaMode.Right) == 0)
+                max.x = screenSize.x;
+            if ((edges & UnityEngine.UI.SafeArea.SafeAreaMode.Bottom) == 0)
+                min.y = 0f;
+            if ((edges & UnityEngine.UI.SafeArea.SafeAreaMode.Top) == 0)
+                max.y = screenSize.y;
+
+            var alignment = component.Alignment;
+            var alignmentFlipped = IsLandscape(Screen.orientation) != IsLandscape(component.ReferenceOrientation);
+            var horizontal = alignmentFlipped
+                ? UnityEngine.UI.SafeArea.AlignmentMode.CenterVertically
+                : UnityEngine.UI.SafeArea.AlignmentMode.CenterHorizontally;
+            var vertical = alignmentFlipped
+                ? UnityEngine.UI.SafeArea.AlignmentMode.CenterHorizontally
+                : UnityEngine.UI.SafeArea.AlignmentMode.CenterVertically;
+
+            if ((alignment & horizontal) != 0)
+            {
+                var inset = Mathf.Max(min.x, screenSize.x - max.x);
+                min.x = inset;
+                max.x = screenSize.x - inset;
+            }
+
+            if ((alignment & vertical) != 0)
+            {
+                var inset = Mathf.Max(min.y, screenSize.y - max.y);
+                min.y = inset;
+                max.y = screenSize.y - inset;
+            }
+
+            var rectTransform = (RectTransform)component.transform;
+            rectTransform.anchorMin = new Vector2(min.x / screenSize.x, min.y / screenSize.y);
+            rectTransform.anchorMax = new Vector2(max.x / screenSize.x, max.y / screenSize.y);
+            rectTransform.offsetMin = Vector2.zero;
+            rectTransform.offsetMax = Vector2.zero;
+        }
+
+        private static bool IsLandscape(ScreenOrientation orientation)
+        {
+            return orientation is ScreenOrientation.LandscapeLeft or ScreenOrientation.LandscapeRight;
         }
     }
 }

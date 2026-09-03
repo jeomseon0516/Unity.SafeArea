@@ -189,13 +189,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 210000}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bd7bc2869d47848848b68afde42f0112, type: 3}
+  m_Script: {fileID: 11500000, guid: a6db4464bd7104c4dbef4aa949a06e0a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
-  applyLeft: 1
-  applyRight: 1
-  applyTop: 1
-  applyBottom: 1
+  m_ReferenceOrientation: 0
+  m_Edges: 15
+  m_Alignment: 0
 --- !u!1 &220000
 GameObject:
   m_ObjectHideFlags: 0
@@ -403,7 +402,7 @@ MonoBehaviour:
     m_BestFit: 0
     m_MinSize: 10
     m_MaxSize: 40
-    m_Alignment: 3
+    m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
