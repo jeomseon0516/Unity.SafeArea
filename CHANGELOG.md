@@ -1,6 +1,6 @@
 # 변경 기록
 
-## [Unreleased]
+## [0.4.0] - 2026-09-03
 
 - **(Breaking)** 자체 `SafeAreaRoot`를 제거하고 uGUI 2.6의 공식 `UnityEngine.UI.SafeArea`로
   전환했습니다. Runtime/Scene 패처와 Basic Usage Scene은 공식 컴포넌트를 사용하며, 기존 네 방향
