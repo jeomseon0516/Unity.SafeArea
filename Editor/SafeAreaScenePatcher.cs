@@ -33,6 +33,12 @@ namespace Jeomseon.Unity.SafeArea.Editor
                 var canvases = root.GetComponentsInChildren<Canvas>(true);
                 foreach (var canvas in canvases)
                 {
+                    // Honor the same runtime-patch exception the runtime applier and
+                    // the Patcher window use, so PatchScene does not silently patch a
+                    // Canvas the project marked as ignored.
+                    if (canvas.TryGetComponent<SafeAreaIgnore>(out _))
+                        continue;
+
                     if (useUndo)
                         Undo.RegisterFullObjectHierarchyUndo(canvas.gameObject, "Patch SafeArea Canvas");
 

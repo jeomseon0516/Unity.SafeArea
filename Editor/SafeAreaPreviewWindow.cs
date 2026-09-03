@@ -33,6 +33,10 @@ namespace Jeomseon.Unity.SafeArea.Editor
         private Vector2 _lastSimScreenSize;
         private Rect _lastSimSafeArea;
 
+        // 마지막 RebuildAll 시점에 실제로 프리뷰에 반영된 값 (stale 감지용)
+        private Vector2 _builtScreenSize;
+        private Rect _builtSafeArea;
+
         // ----- Preview용 씬/카메라/RT -----
         private Scene _previewScene;
         private Camera _previewCamera;
@@ -221,6 +225,13 @@ namespace Jeomseon.Unity.SafeArea.Editor
                             _overrideSafeArea = EditorGUILayout.RectField("Override Safe Area (px)", _overrideSafeArea);
                         }
 
+                        if (!_overrideEnabled && PreviewIsStale())
+                        {
+                            EditorGUILayout.HelpBox(
+                                "Device Simulator values changed. Press Apply & Rebuild Preview to refresh the render.",
+                                MessageType.Info);
+                        }
+
                         if (GUILayout.Button("Apply & Rebuild Preview"))
                         {
                             // Override ON이면 사용자가 입력한 값을, OFF이면 시뮬레이터 값을 사용하여
@@ -288,7 +299,20 @@ namespace Jeomseon.Unity.SafeArea.Editor
             UpdateCameraSettings();
             ApplyPreviewToScene();
             Canvas.ForceUpdateCanvases();
+            _builtScreenSize = GetEffectiveScreenSize();
+            _builtSafeArea = GetEffectiveSafeArea();
             Repaint();
+        }
+
+        private bool PreviewIsStale()
+        {
+            var screen = GetEffectiveScreenSize();
+            var area = GetEffectiveSafeArea();
+            return Vector2.Distance(screen, _builtScreenSize) > 0.1f ||
+                   Mathf.Abs(area.x - _builtSafeArea.x) > 0.1f ||
+                   Mathf.Abs(area.y - _builtSafeArea.y) > 0.1f ||
+                   Mathf.Abs(area.width - _builtSafeArea.width) > 0.1f ||
+                   Mathf.Abs(area.height - _builtSafeArea.height) > 0.1f;
         }
 
         // =====================================================================
@@ -645,6 +669,13 @@ namespace Jeomseon.Unity.SafeArea.Editor
                 var safeAreaComponents = root.GetComponentsInChildren<UnityEngine.UI.SafeArea>(true);
                 foreach (var component in safeAreaComponents)
                 {
+                    // Skip SafeArea components nested inside another SafeArea container:
+                    // the outer one already remapped the hierarchy to safe-area anchors,
+                    // so applying the screen safe area here again would double-inset.
+                    var parent = component.transform.parent;
+                    if (parent != null && parent.GetComponentInParent<UnityEngine.UI.SafeArea>(true) != null)
+                        continue;
+
                     ApplyPreview(component, safeArea, screenSize);
                 }
 
@@ -675,7 +706,10 @@ namespace Jeomseon.Unity.SafeArea.Editor
                 max.y = screenSize.y;
 
             var alignment = component.Alignment;
-            var alignmentFlipped = IsLandscape(Screen.orientation) != IsLandscape(component.ReferenceOrientation);
+            // Use the orientation of the previewed screen (Override / Simulator input),
+            // not the Editor's real Screen.orientation.
+            var previewLandscape = screenSize.x > screenSize.y;
+            var alignmentFlipped = previewLandscape != IsLandscape(component.ReferenceOrientation);
             var horizontal = alignmentFlipped
                 ? UnityEngine.UI.SafeArea.AlignmentMode.CenterVertically
                 : UnityEngine.UI.SafeArea.AlignmentMode.CenterHorizontally;

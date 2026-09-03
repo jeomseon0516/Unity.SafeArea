@@ -125,8 +125,13 @@ namespace Jeomseon.Unity.SafeArea.Editor
 
             var settings = SafeAreaSettings.Resolve();
             var validator = new SafeAreaPatchValidator(settings);
-            var undoGroup = Undo.GetCurrentGroup();
+
+            // Start a fresh Undo group so CollapseUndoOperations only folds this
+            // method's operations together, not whatever the user did just before
+            // pressing Apply.
+            Undo.IncrementCurrentGroup();
             Undo.SetCurrentGroupName("Apply Safe Area Patcher Changes");
+            var undoGroup = Undo.GetCurrentGroup();
 
             foreach (var entry in _treeView.CanvasEntries.Values.ToArray())
             {

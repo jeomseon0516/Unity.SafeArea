@@ -86,26 +86,43 @@ namespace Jeomseon.Unity.SafeArea.Editor
                 }
             }
 
-            var ignoreToggleRect = args.rowRect;
-            ignoreToggleRect.x = ignoreToggleRect.xMax - 365f;
-            ignoreToggleRect.width = 18f;
-            EditorGUI.BeginChangeCheck();
-            var runtimeIgnore = EditorGUI.Toggle(ignoreToggleRect, GetRuntimeIgnoreState(entry.EntityId));
-            if (EditorGUI.EndChangeCheck())
+            // Lay the right-hand cluster out from the row's right edge and clamp it
+            // against the target toggle so nothing overlaps when the row is narrow.
+            const float ignoreToggleWidth = 18f;
+            const float ignoreLabelWidth = 95f;
+            const float statusMaxWidth = 250f;
+            const float gap = 8f;
+
+            float rowRight = args.rowRect.xMax - 6f;
+            float targetToggleRight = toggleRect.xMax;
+
+            float statusWidth = Mathf.Clamp(rowRight - targetToggleRight - gap, 0f, statusMaxWidth);
+            var statusRect = new Rect(rowRight - statusWidth, args.rowRect.y, statusWidth, args.rowRect.height);
+            if (statusWidth > 40f)
+                GUI.Label(statusRect, entry.Validation.Message, EditorStyles.miniLabel);
+
+            float ignoreClusterLeft = statusRect.x - gap - ignoreLabelWidth - ignoreToggleWidth - 2f;
+            if (ignoreClusterLeft > targetToggleRight + gap)
             {
-                _runtimeIgnoreStates[entry.EntityId] = runtimeIgnore;
-                StateChanged?.Invoke();
+                var ignoreToggleRect = new Rect(ignoreClusterLeft, args.rowRect.y + 2f, ignoreToggleWidth, 18f);
+                var ignoreLabelRect = new Rect(
+                    ignoreClusterLeft + ignoreToggleWidth + 2f, args.rowRect.y, ignoreLabelWidth, args.rowRect.height);
+
+                // A Canvas that cannot take SafeArea (World Space, invalid) cannot be
+                // runtime-patched either, so its Runtime Ignore marker is meaningless.
+                using (new EditorGUI.DisabledScope(!entry.Validation.CanChange))
+                {
+                    EditorGUI.BeginChangeCheck();
+                    var runtimeIgnore = EditorGUI.Toggle(ignoreToggleRect, GetRuntimeIgnoreState(entry.EntityId));
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        _runtimeIgnoreStates[entry.EntityId] = runtimeIgnore;
+                        StateChanged?.Invoke();
+                    }
+                }
+
+                GUI.Label(ignoreLabelRect, "Runtime Ignore", EditorStyles.miniLabel);
             }
-
-            var ignoreLabelRect = ignoreToggleRect;
-            ignoreLabelRect.x += 20f;
-            ignoreLabelRect.width = 95f;
-            GUI.Label(ignoreLabelRect, "Runtime Ignore", EditorStyles.miniLabel);
-
-            var statusRect = args.rowRect;
-            statusRect.xMin = Mathf.Max(statusRect.xMin, statusRect.xMax - 250f);
-            statusRect.xMax -= 6f;
-            GUI.Label(statusRect, entry.Validation.Message, EditorStyles.miniLabel);
         }
 
         private TreeViewItem<EntityId> BuildItem(GameObject gameObject, int depth)
