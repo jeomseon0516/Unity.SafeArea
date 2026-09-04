@@ -2,6 +2,11 @@
 
 UPM package for applying `Screen.safeArea` to uGUI layouts, with runtime canvas patching and an editor preview.
 
+## Requirements
+
+- Unity 6000.6.0f1 or newer
+- uGUI 2.6.0 or newer
+
 ## Install via OpenUPM
 
 Register the OpenUPM scoped registry once in your project's `Packages/manifest.json`.
