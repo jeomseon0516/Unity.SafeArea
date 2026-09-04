@@ -3,14 +3,38 @@
 모바일 화면의 안전 영역을 uGUI/UI Toolkit 레이아웃에 적용하고 에디터에서 미리 볼 수 있게 하는 UPM
 패키지입니다.
 
-## 설치
+## 요구 사항
 
-요구 버전: Unity 6000.6.0f1 이상, uGUI 2.6.0 이상
+- Unity 6000.6.0f1 이상
+- uGUI 2.6.0 이상
 
-OpenUPM 등록 전에는 Package Manager의 **Add package from git URL**에서 다음 주소를 사용합니다.
+## OpenUPM으로 설치
+
+프로젝트의 `Packages/manifest.json`에 OpenUPM scoped registry를 한 번 등록합니다.
+
+```json
+{
+  "scopedRegistries": [
+    {
+      "name": "OpenUPM",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "com.jeomseon"
+      ]
+    }
+  ],
+  "dependencies": {
+    "com.jeomseon.unity.safe-area": "0.4.0"
+  }
+}
+```
+
+## Git URL로 설치
+
+Unity Package Manager의 `Install package from git URL`에 다음 주소를 사용합니다.
 
 ```text
-https://github.com/jeomseon0516/Unity.SafeArea.git#v0.1.2
+https://github.com/jeomseon0516/Unity.SafeArea.git#v0.4.0
 ```
 
 ## 구성
