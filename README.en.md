@@ -1,15 +1,28 @@
 # Jeomseon Unity Safe Area
 
-UPM package for applying `Screen.safeArea` to uGUI layouts, with runtime canvas patching and an editor preview.
+[한국어](README.md) | English
+
+Provides mobile safe-area padding plus scene patching and isolated preview tools. uGUI root resizing uses the official SafeArea component.
+
+## Quick start
+
+For uGUI choose official SafeArea or SafeAreaPadding; for UI Toolkit attach a Root/Padding adapter to UIDocument. Explicitly enable runtime patching in Settings; Editor Patcher applies on Apply Changes.
+
+## Contracts and limitations
+
+Root shrinks the whole box; Padding shifts only content. SafeAreaIgnore opts out of runtime patching. Preview renders clones, not the source Scene. Automatic runtime Canvas mutation is disabled by default.
 
 ## Requirements
 
-- Unity 6000.6.0f1 or newer
-- uGUI 2.6.0 or newer
+- Unity `6000.6.0f1`
+- Package: `com.jeomseon.unity.safe-area` `0.4.0`
+- `com.unity.ugui`: `2.6.0`
+- `com.unity.modules.ui`: `1.0.0`
+- `com.unity.modules.uielements`: `1.0.0`
 
-## Install via OpenUPM
+## Installation
 
-Register the OpenUPM scoped registry once in your project's `Packages/manifest.json`.
+Merge this into your project's `Packages/manifest.json`; preserve existing dependencies and registries.
 
 ```json
 {
@@ -28,22 +41,32 @@ Register the OpenUPM scoped registry once in your project's `Packages/manifest.j
 }
 ```
 
-## Install via Git URL
-
-Enter the following URL in Unity Package Manager's `Install package from git URL`.
+Or use **Install package from git URL** in Package Manager:
 
 ```text
 https://github.com/jeomseon0516/Unity.SafeArea.git#v0.4.0
 ```
 
-Requires Unity 6000.6.0f1 or newer and uGUI 2.6.0 or newer. RectTransform fitting uses the official
-`UnityEngine.UI.SafeArea`; this package retains additive `LayoutGroup` padding, UI Toolkit support, canvas
-patching, and isolated editor preview features.
+## Samples
 
-`Jeomseon/Safe Area/Patch Active Scene` opens a hierarchy TreeView instead of modifying the Scene immediately.
-Canvas checkboxes describe the desired state, validation explains excluded targets, and `Apply Changes` batches
-component additions and removals with Undo support. `Safe Area` and `Runtime Ignore` are independent controls:
-the latter manages the `SafeAreaIgnore` marker respected by runtime patching only.
+Import the desired entry from **Package Manager > Samples**. Use the included Scene/Editor tool and complete its Setup step first, if required.
 
-Migration from 0.3.x: replace `Jeomseon.Unity.SafeArea.SafeAreaRoot` with `UnityEngine.UI.SafeArea`. The former
-per-edge booleans map to the official component's `Edges` flags.
+- [Basic Usage](Samples~/BasicUsage/README.md)
+  - [SafeAreaBasicUsageSample](Samples~/BasicUsage/SafeAreaBasicUsageSample.unity)
+- [UI Toolkit Usage](Samples~/UIToolkitUsage/README.md)
+  - [SafeAreaUIToolkitSample](Samples~/UIToolkitUsage/SafeAreaUIToolkitSample.unity)
+
+## Tests
+
+[Test sources](Tests)
+
+Add the package ID to manifest `testables`, then execute its relevant EditMode/PlayMode assemblies in Unity Test Runner.
+
+## Further reading
+
+[Complete source map and package metadata](Documentation~/Overview.en.md)
+- [Changelog](CHANGELOG.md)
+
+## License
+
+[License](LICENSE.md)
