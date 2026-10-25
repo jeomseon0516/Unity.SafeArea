@@ -1,16 +1,28 @@
 # Jeomseon Unity Safe Area
 
-모바일 화면의 안전 영역을 uGUI/UI Toolkit 레이아웃에 적용하고 에디터에서 미리 볼 수 있게 하는 UPM
-패키지입니다.
+한국어 | [English](README.en.md)
+
+모바일 안전 영역 여백 적용과 Scene 패치·격리 Preview 도구를 제공합니다. uGUI root 크기 조정은 공식 SafeArea를 사용합니다.
+
+## 빠르게 시작하기
+
+uGUI는 공식 SafeArea 또는 SafeAreaPadding 선택. UI Toolkit은 UIDocument에 Root 또는 Padding adapter 연결. Runtime 자동 패치는 Settings에서 명시적으로 활성화하고 Editor Patcher는 Apply Changes로 반영합니다.
+
+## 계약과 주의사항
+
+Root는 배경 포함 박스를 줄이고 Padding은 내부 콘텐츠만 이동합니다. SafeAreaIgnore는 runtime 패치 제외입니다. Preview는 원본 Scene이 아닌 복제본을 렌더링합니다. 임의 Canvas를 자동 변경하는 기본 정책은 꺼져 있습니다.
 
 ## 요구 사항
 
-- Unity 6000.6.0f1 이상
-- uGUI 2.6.0 이상
+- Unity `6000.6.0f1`
+- 패키지: `com.jeomseon.unity.safe-area` `0.4.0`
+- `com.unity.ugui`: `2.6.0`
+- `com.unity.modules.ui`: `1.0.0`
+- `com.unity.modules.uielements`: `1.0.0`
 
-## OpenUPM으로 설치
+## 설치
 
-프로젝트의 `Packages/manifest.json`에 OpenUPM scoped registry를 한 번 등록합니다.
+프로젝트 `Packages/manifest.json`의 기존 dependencies와 registry를 유지하면서 다음 항목을 병합합니다.
 
 ```json
 {
@@ -29,17 +41,17 @@
 }
 ```
 
-## Git URL로 설치
-
-Unity Package Manager의 `Install package from git URL`에 다음 주소를 사용합니다.
+또는 Package Manager의 **Install package from git URL**을 사용합니다:
 
 ```text
 https://github.com/jeomseon0516/Unity.SafeArea.git#v0.4.0
 ```
 
-## 구성
+## API 사용과 상세 설명
 
-### uGUI
+### 구성
+
+#### uGUI
 
 - uGUI 2.6의 공식 `UnityEngine.UI.SafeArea`: `RectTransform` 앵커에 안전 영역 적용. 이 패키지는
   동일 기능을 다시 구현하지 않습니다.
@@ -62,7 +74,7 @@ https://github.com/jeomseon0516/Unity.SafeArea.git#v0.4.0
   내장 Device Simulator(`Window/General/Device Simulator`)의 `Screen.safeArea`를 기본으로 읽어오며,
   Override 토글로 임의의 값을 직접 입력해 확인할 수도 있습니다.
 
-### UI Toolkit
+#### UI Toolkit
 
 - `SafeAreaVisualElementRoot`(`Jeomseon.Unity.SafeArea.UIToolkit`, 공식 uGUI `SafeArea`의 UI Toolkit
   대응): `UIDocument`가 붙은 GameObject에 부착합니다. `RectTransform` anchor 대신
@@ -82,9 +94,33 @@ uGUI 공식 API는 `RectTransform`이 필요해 UI Toolkit에는 적용되지 �
 프로젝트는 `SafeAreaVisualElementPadding`을 사용해야 합니다. 사용 예제는 `Samples~/UIToolkitUsage`
 참고(uGUI 예제는 `Samples~/BasicUsage`).
 
-### 0.3.x 마이그레이션
+#### 0.3.x 마이그레이션
 
 `Jeomseon.Unity.SafeArea.SafeAreaRoot`를 제거하고 같은 GameObject에 uGUI 2.6의
 `UnityEngine.UI.SafeArea`를 추가합니다. 기존 `applyLeft`/`applyRight`/`applyTop`/`applyBottom`은 공식
 컴포넌트의 `Edges`에 대응합니다. `SafeAreaRuntimeApplier`와 Scene Patcher는 공식 컴포넌트를 자동으로
 생성합니다.
+
+## 샘플 실행
+
+**Package Manager > Samples**에서 예제를 Import합니다. 포함된 Scene 또는 Editor 도구를 열고 필요한 Setup 메뉴를 먼저 실행합니다.
+
+- [Basic Usage](Samples~/BasicUsage/README.md)
+  - [SafeAreaBasicUsageSample](Samples~/BasicUsage/SafeAreaBasicUsageSample.unity)
+- [UI Toolkit Usage](Samples~/UIToolkitUsage/README.md)
+  - [SafeAreaUIToolkitSample](Samples~/UIToolkitUsage/SafeAreaUIToolkitSample.unity)
+
+## 테스트
+
+[테스트 코드](Tests)
+
+manifest의 `testables`에 패키지 ID를 추가하고 Unity Test Runner의 관련 EditMode/PlayMode 어셈블리를 실행합니다.
+
+## 추가 문서
+
+[전체 코드 지도와 패키지 구성](Documentation~/Overview.md)
+- [Changelog](CHANGELOG.md)
+
+## 라이선스
+
+[License](LICENSE.md)
