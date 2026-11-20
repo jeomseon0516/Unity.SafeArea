@@ -4,8 +4,9 @@ using System.Linq;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEditor.UIElements;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
+using UnityEngine.UIElements;
 using Jeomseon.Unity.SafeArea;
 
 namespace Jeomseon.Unity.SafeArea.Editor
@@ -47,11 +48,39 @@ namespace Jeomseon.Unity.SafeArea.Editor
         private int _srcCanvasCount;
         private int _previewCanvasCount;
 
+        // ----- UI Toolkit 요소 (CreateGUI에서 생성) -----
+        private Label _inputValueLabel;
+        private Label _sourceCanvasesValueLabel;
+        private Label _previewCanvasesValueLabel;
+        private Label _canvasesInSceneLabel;
+        private Label _cameraEnabledLabel;
+        private Label _cameraActiveLabel;
+        private Vector2Field _appliedScreenField;
+        private RectField _appliedSafeAreaField;
+        private Label _insetsValueLabel;
+        private Vector2Field _simulatorScreenField;
+        private RectField _simulatorSafeAreaField;
+        private Toggle _overrideToggle;
+        private Vector2Field _overrideScreenField;
+        private RectField _overrideSafeAreaField;
+        private HelpBox _staleHelpBox;
+        private VisualElement _previewArea;
+        private VisualElement _previewFrame;
+        private Image _previewImage;
+        private VisualElement _overlayRoot;
+        private readonly VisualElement[] _unsafeAreas = new VisualElement[4];
+        private readonly Label[] _unsafeAreaLabels = new Label[4];
+        private VisualElement _safeAreaBorder;
+        private VisualElement _safeAreaBadge;
+        private Label _safeAreaBadgeLabel;
+
         // =====================================================================
         //  Menu
         // =====================================================================
 
         private const float ControlPanelWidth = 340f;
+        private const float LabelFieldLabelWidth = 150f;
+        private const int OverlayFontSize = 9;
         private static readonly Color UnsafeAreaOverlayColor = new(0.85f, 0.12f, 0.08f, 0.22f);
         private static readonly Color SafeAreaBorderColor = new(0.2f, 1f, 0.35f, 1f);
         private static readonly Color SafeAreaBadgeColor = new(0.02f, 0.08f, 0.03f, 0.88f);
@@ -133,7 +162,7 @@ namespace Jeomseon.Unity.SafeArea.Editor
 
                 // 값만 갱신하고, 렌더/리빌드는 하지 않는다.
                 // 사용자가 Apply 버튼을 누르면 그때 한 번만 리빌드.
-                Repaint();
+                RefreshView();
             }
         }
 
@@ -141,116 +170,286 @@ namespace Jeomseon.Unity.SafeArea.Editor
         //  GUI
         // =====================================================================
 
-        private void OnGUI()
+        private void CreateGUI()
         {
-            EditorGUILayout.LabelField("Safe Area Preview (PreviewScene)", EditorStyles.boldLabel);
-            EditorGUILayout.Space();
+            var root = rootVisualElement;
 
-            // 리빌드는 모든 레이아웃 Scope가 닫힌 뒤 마지막에 한 번만 수행한다(같은 프레임에 여러 번
-            // 리빌드하지 않기 위한 플래그일 뿐 — HorizontalScope/VerticalScope의 Dispose가 Begin/End를
-            // 항상 짝지어 호출해주므로 그룹 균형 자체는 걱정할 필요 없음).
-            bool needsRebuild = false;
+            var title = new Label("Safe Area Preview (PreviewScene)");
+            title.style.unityFontStyleAndWeight = FontStyle.Bold;
+            root.Add(title);
 
-            using (new EditorGUILayout.HorizontalScope())
+            var body = new VisualElement();
+            body.style.flexDirection = FlexDirection.Row;
+            body.style.flexGrow = 1f;
+            body.style.marginTop = 6f;
+            root.Add(body);
+
+            // ----- 왼쪽: 컨트롤 패널 -----
+            var controlPanel = new VisualElement();
+            controlPanel.style.width = ControlPanelWidth;
+            controlPanel.style.flexShrink = 0f;
+            body.Add(controlPanel);
+
+            controlPanel.Add(CreateBoldLabel("Preview Status"));
+            _inputValueLabel = AddLabelField(controlPanel, "Input");
+            _sourceCanvasesValueLabel = AddLabelField(controlPanel, "Source Canvases");
+            _previewCanvasesValueLabel = AddLabelField(controlPanel, "Preview Canvases");
+            _canvasesInSceneLabel = new Label();
+            controlPanel.Add(_canvasesInSceneLabel);
+            _cameraEnabledLabel = new Label();
+            controlPanel.Add(_cameraEnabledLabel);
+            _cameraActiveLabel = new Label();
+            controlPanel.Add(_cameraActiveLabel);
+
+            var appliedHeader = CreateBoldLabel("Applied Safe Area");
+            appliedHeader.style.marginTop = 6f;
+            controlPanel.Add(appliedHeader);
+
+            // IMGUI에서는 값을 반환받지 않아 편집해도 즉시 되돌아가던 필드라, 변경 시 현재 값으로 되돌린다.
+            _appliedScreenField = new Vector2Field("Screen (px)");
+            _appliedScreenField.RegisterValueChangedCallback(_ =>
+                _appliedScreenField.SetValueWithoutNotify(GetEffectiveScreenSize()));
+            controlPanel.Add(_appliedScreenField);
+            _appliedSafeAreaField = new RectField("Safe Area (px)");
+            _appliedSafeAreaField.RegisterValueChangedCallback(_ =>
+                _appliedSafeAreaField.SetValueWithoutNotify(GetEffectiveSafeArea()));
+            controlPanel.Add(_appliedSafeAreaField);
+            _insetsValueLabel = AddLabelField(controlPanel, "Insets (L / R / T / B)");
+
+            var overlayToggle = new Toggle("Show Safe Area Overlay") { value = _showSafeAreaOverlay };
+            overlayToggle.RegisterValueChangedCallback(evt =>
             {
-                // ----- 왼쪽: 컨트롤 패널 -----
-                using (new EditorGUILayout.VerticalScope(GUILayout.Width(ControlPanelWidth)))
+                _showSafeAreaOverlay = evt.newValue;
+                RefreshView();
+            });
+            controlPanel.Add(overlayToggle);
+
+            // 시뮬레이터(현재 GameView) 기준 값 디스플레이 (읽기 전용)
+            _simulatorScreenField = new Vector2Field("Simulator Screen (px)");
+            _simulatorScreenField.style.marginTop = 6f;
+            _simulatorScreenField.SetEnabled(false);
+            controlPanel.Add(_simulatorScreenField);
+            _simulatorSafeAreaField = new RectField("Simulator SafeArea (px)");
+            _simulatorSafeAreaField.SetEnabled(false);
+            controlPanel.Add(_simulatorSafeAreaField);
+
+            // ----- Override 토글 -----
+            _overrideToggle = new Toggle("Override Safe Area") { value = _overrideEnabled };
+            _overrideToggle.style.marginTop = 6f;
+            _overrideToggle.RegisterValueChangedCallback(evt =>
+            {
+                _overrideEnabled = evt.newValue;
+
+                // Override를 껐을 때는, 필드를 시뮬레이터 상태로 맞춰두면 UX가 더 직관적
+                if (!_overrideEnabled)
                 {
-                    EditorGUILayout.LabelField("Preview Status", EditorStyles.boldLabel);
-                    EditorGUILayout.LabelField("Input", _overrideEnabled ? "Override" : "Simulator");
-                    EditorGUILayout.LabelField("Source Canvases", _srcCanvasCount.ToString());
-                    EditorGUILayout.LabelField("Preview Canvases", _previewCanvasCount.ToString());
-
-                    if (_previewScene.IsValid())
-                    {
-                        int canvasInScene = _previewScene.GetRootGameObjects()
-                            .Sum(r => r.GetComponentsInChildren<Canvas>(true).Length);
-                        EditorGUILayout.LabelField($"Canvases in PreviewScene: {canvasInScene}");
-                    }
-
-                    if (_previewCamera != null)
-                    {
-                        EditorGUILayout.LabelField($"Camera enabled: {_previewCamera.enabled}");
-                        EditorGUILayout.LabelField($"Camera active: {_previewCamera.gameObject.activeInHierarchy}");
-                    }
-
-                    EditorGUILayout.Space();
-
-                    var effectiveScreenSize = GetEffectiveScreenSize();
-                    var effectiveSafeArea = GetEffectiveSafeArea();
-                    var insets = GetSafeAreaInsets(effectiveScreenSize, effectiveSafeArea);
-                    EditorGUILayout.LabelField("Applied Safe Area", EditorStyles.boldLabel);
-                    EditorGUILayout.Vector2Field("Screen (px)", effectiveScreenSize);
-                    EditorGUILayout.RectField("Safe Area (px)", effectiveSafeArea);
-                    EditorGUILayout.LabelField(
-                        "Insets (L / R / T / B)",
-                        $"{insets.x:0} / {insets.y:0} / {insets.z:0} / {insets.w:0}");
-                    _showSafeAreaOverlay = EditorGUILayout.Toggle("Show Safe Area Overlay", _showSafeAreaOverlay);
-
-                    EditorGUILayout.Space();
-
-                    // 시뮬레이터(현재 GameView) 기준 값 디스플레이 (읽기 전용)
-                    using (new EditorGUI.DisabledScope(true))
-                    {
-                        EditorGUILayout.Vector2Field("Simulator Screen (px)", _simScreenSize);
-                        EditorGUILayout.RectField("Simulator SafeArea (px)", _simSafeArea);
-                    }
-
-                    EditorGUILayout.Space();
-
-                    // ----- Override 토글 -----
-                    bool prevOverride = _overrideEnabled;
-                    _overrideEnabled = EditorGUILayout.Toggle("Override Safe Area", _overrideEnabled);
-
-                    if (prevOverride != _overrideEnabled)
-                    {
-                        // Override를 껐을 때는, 필드를 시뮬레이터 상태로 맞춰두면 UX가 더 직관적
-                        if (!_overrideEnabled)
-                        {
-                            _overrideScreenSize = _simScreenSize;
-                            _overrideSafeArea = _simSafeArea;
-                        }
-
-                        // Override 상태가 바뀌면, 현재 설정에 맞춰 한 번만 전체 리빌드
-                        needsRebuild = true;
-                    }
-                    else
-                    {
-                        EditorGUILayout.Space();
-
-                        // ----- Override 값 편집 (Override ON일 때만 수정 가능) -----
-                        using (new EditorGUI.DisabledScope(!_overrideEnabled))
-                        {
-                            _overrideScreenSize = EditorGUILayout.Vector2Field("Override Screen Size (px)", _overrideScreenSize);
-                            _overrideSafeArea = EditorGUILayout.RectField("Override Safe Area (px)", _overrideSafeArea);
-                        }
-
-                        if (!_overrideEnabled && PreviewIsStale())
-                        {
-                            EditorGUILayout.HelpBox(
-                                "Device Simulator values changed. Press Apply & Rebuild Preview to refresh the render.",
-                                MessageType.Info);
-                        }
-
-                        if (GUILayout.Button("Apply & Rebuild Preview"))
-                        {
-                            // Override ON이면 사용자가 입력한 값을, OFF이면 시뮬레이터 값을 사용하여
-                            // 한 번만 전체 리빌드
-                            needsRebuild = true;
-                        }
-                    }
+                    _overrideScreenSize = _simScreenSize;
+                    _overrideSafeArea = _simSafeArea;
                 }
 
-                // ----- 오른쪽: 프리뷰 렌더 (남은 가로 공간 전체) -----
-                using (new EditorGUILayout.VerticalScope())
-                {
-                    if (!needsRebuild)
-                        DrawPreview();
-                }
+                // Override 상태가 바뀌면, 현재 설정에 맞춰 한 번만 전체 리빌드
+                RebuildAll();
+            });
+            controlPanel.Add(_overrideToggle);
+
+            // ----- Override 값 편집 (Override ON일 때만 수정 가능) -----
+            _overrideScreenField = new Vector2Field("Override Screen Size (px)");
+            _overrideScreenField.style.marginTop = 6f;
+            _overrideScreenField.RegisterValueChangedCallback(evt =>
+            {
+                _overrideScreenSize = evt.newValue;
+                RefreshView();
+            });
+            controlPanel.Add(_overrideScreenField);
+            _overrideSafeAreaField = new RectField("Override Safe Area (px)");
+            _overrideSafeAreaField.RegisterValueChangedCallback(evt =>
+            {
+                _overrideSafeArea = evt.newValue;
+                RefreshView();
+            });
+            controlPanel.Add(_overrideSafeAreaField);
+
+            _staleHelpBox = new HelpBox(
+                "Device Simulator values changed. Press Apply & Rebuild Preview to refresh the render.",
+                HelpBoxMessageType.Info);
+            controlPanel.Add(_staleHelpBox);
+
+            // Override ON이면 사용자가 입력한 값을, OFF이면 시뮬레이터 값을 사용하여 한 번만 전체 리빌드
+            controlPanel.Add(new Button(RebuildAll) { text = "Apply & Rebuild Preview" });
+
+            // ----- 오른쪽: 프리뷰 렌더 (남은 가로 공간 전체) -----
+            _previewArea = new VisualElement();
+            _previewArea.style.flexGrow = 1f;
+            _previewArea.style.overflow = Overflow.Hidden;
+            _previewArea.RegisterCallback<GeometryChangedEvent>(_ => UpdatePreviewLayout());
+            body.Add(_previewArea);
+
+            _previewFrame = new VisualElement { pickingMode = PickingMode.Ignore };
+            _previewFrame.style.position = Position.Absolute;
+            // 카메라 배경색과 같은 검정 배경 위에 RenderTexture를 그린다.
+            _previewFrame.style.backgroundColor = Color.black;
+            _previewArea.Add(_previewFrame);
+
+            _previewImage = new Image { scaleMode = ScaleMode.StretchToFill, pickingMode = PickingMode.Ignore };
+            SetAbsoluteFill(_previewImage);
+            _previewFrame.Add(_previewImage);
+
+            _overlayRoot = new VisualElement { pickingMode = PickingMode.Ignore };
+            SetAbsoluteFill(_overlayRoot);
+            _previewFrame.Add(_overlayRoot);
+
+            for (var i = 0; i < _unsafeAreas.Length; i++)
+            {
+                var unsafeArea = CreateOverlayBox(UnsafeAreaOverlayColor);
+                var label = CreateOverlayLabel(TextAnchor.MiddleCenter);
+                label.style.whiteSpace = WhiteSpace.Normal;
+                SetAbsoluteFill(label);
+                unsafeArea.Add(label);
+                _overlayRoot.Add(unsafeArea);
+                _unsafeAreas[i] = unsafeArea;
+                _unsafeAreaLabels[i] = label;
             }
 
-            if (needsRebuild)
-                RebuildAll();
+            _safeAreaBorder = new VisualElement { pickingMode = PickingMode.Ignore };
+            _safeAreaBorder.style.position = Position.Absolute;
+            const float borderWidth = 2f;
+            _safeAreaBorder.style.borderLeftWidth = borderWidth;
+            _safeAreaBorder.style.borderRightWidth = borderWidth;
+            _safeAreaBorder.style.borderTopWidth = borderWidth;
+            _safeAreaBorder.style.borderBottomWidth = borderWidth;
+            _safeAreaBorder.style.borderLeftColor = SafeAreaBorderColor;
+            _safeAreaBorder.style.borderRightColor = SafeAreaBorderColor;
+            _safeAreaBorder.style.borderTopColor = SafeAreaBorderColor;
+            _safeAreaBorder.style.borderBottomColor = SafeAreaBorderColor;
+            _overlayRoot.Add(_safeAreaBorder);
+
+            _safeAreaBadge = CreateOverlayBox(SafeAreaBadgeColor);
+            _safeAreaBadge.style.overflow = Overflow.Hidden;
+            _safeAreaBadgeLabel = CreateOverlayLabel(TextAnchor.UpperLeft);
+            _safeAreaBadgeLabel.style.position = Position.Absolute;
+            _safeAreaBadgeLabel.style.left = 6f;
+            _safeAreaBadgeLabel.style.right = 6f;
+            _safeAreaBadgeLabel.style.top = 2f;
+            _safeAreaBadgeLabel.style.bottom = 2f;
+            _safeAreaBadge.Add(_safeAreaBadgeLabel);
+            _overlayRoot.Add(_safeAreaBadge);
+
+            RefreshView();
+        }
+
+        /// <summary>
+        /// 현재 상태 값을 UI 요소에 반영하고, 프리뷰를 다시 렌더링한다(IMGUI의 Repaint 시점에 해당).
+        /// CreateGUI 이전(OnEnable 중)에는 아무 것도 하지 않는다.
+        /// </summary>
+        private void RefreshView()
+        {
+            if (_previewArea == null)
+                return;
+
+            _inputValueLabel.text = _overrideEnabled ? "Override" : "Simulator";
+            _sourceCanvasesValueLabel.text = _srcCanvasCount.ToString();
+            _previewCanvasesValueLabel.text = _previewCanvasCount.ToString();
+
+            var previewSceneValid = _previewScene.IsValid();
+            _canvasesInSceneLabel.style.display = previewSceneValid ? DisplayStyle.Flex : DisplayStyle.None;
+            if (previewSceneValid)
+            {
+                int canvasInScene = _previewScene.GetRootGameObjects()
+                    .Sum(r => r.GetComponentsInChildren<Canvas>(true).Length);
+                _canvasesInSceneLabel.text = $"Canvases in PreviewScene: {canvasInScene}";
+            }
+
+            var hasCamera = _previewCamera != null;
+            _cameraEnabledLabel.style.display = hasCamera ? DisplayStyle.Flex : DisplayStyle.None;
+            _cameraActiveLabel.style.display = hasCamera ? DisplayStyle.Flex : DisplayStyle.None;
+            if (hasCamera)
+            {
+                _cameraEnabledLabel.text = $"Camera enabled: {_previewCamera.enabled}";
+                _cameraActiveLabel.text = $"Camera active: {_previewCamera.gameObject.activeInHierarchy}";
+            }
+
+            var effectiveScreenSize = GetEffectiveScreenSize();
+            var effectiveSafeArea = GetEffectiveSafeArea();
+            var insets = GetSafeAreaInsets(effectiveScreenSize, effectiveSafeArea);
+            _appliedScreenField.SetValueWithoutNotify(effectiveScreenSize);
+            _appliedSafeAreaField.SetValueWithoutNotify(effectiveSafeArea);
+            _insetsValueLabel.text = $"{insets.x:0} / {insets.y:0} / {insets.z:0} / {insets.w:0}";
+
+            _simulatorScreenField.SetValueWithoutNotify(_simScreenSize);
+            _simulatorSafeAreaField.SetValueWithoutNotify(_simSafeArea);
+
+            _overrideToggle.SetValueWithoutNotify(_overrideEnabled);
+            _overrideScreenField.SetValueWithoutNotify(_overrideScreenSize);
+            _overrideSafeAreaField.SetValueWithoutNotify(_overrideSafeArea);
+            _overrideScreenField.SetEnabled(_overrideEnabled);
+            _overrideSafeAreaField.SetEnabled(_overrideEnabled);
+
+            _staleHelpBox.style.display = !_overrideEnabled && PreviewIsStale()
+                ? DisplayStyle.Flex
+                : DisplayStyle.None;
+
+            RenderPreview();
+            UpdatePreviewLayout();
+        }
+
+        private static Label CreateBoldLabel(string text)
+        {
+            var label = new Label(text);
+            label.style.unityFontStyleAndWeight = FontStyle.Bold;
+            return label;
+        }
+
+        /// <summary>IMGUI <c>EditorGUILayout.LabelField(label, value)</c>와 같은 "라벨 + 값" 한 줄.</summary>
+        private static Label AddLabelField(VisualElement parent, string labelText)
+        {
+            var row = new VisualElement();
+            row.style.flexDirection = FlexDirection.Row;
+
+            var label = new Label(labelText);
+            label.style.width = LabelFieldLabelWidth;
+            label.style.flexShrink = 0f;
+            row.Add(label);
+
+            var value = new Label();
+            value.style.flexGrow = 1f;
+            row.Add(value);
+
+            parent.Add(row);
+            return value;
+        }
+
+        private static void SetAbsoluteFill(VisualElement element)
+        {
+            element.style.position = Position.Absolute;
+            element.style.left = 0f;
+            element.style.top = 0f;
+            element.style.right = 0f;
+            element.style.bottom = 0f;
+        }
+
+        private static VisualElement CreateOverlayBox(Color color)
+        {
+            var box = new VisualElement { pickingMode = PickingMode.Ignore };
+            box.style.position = Position.Absolute;
+            box.style.backgroundColor = color;
+            return box;
+        }
+
+        private static Label CreateOverlayLabel(TextAnchor alignment)
+        {
+            var label = new Label { pickingMode = PickingMode.Ignore };
+            label.style.color = Color.white;
+            label.style.fontSize = OverlayFontSize;
+            label.style.unityTextAlign = alignment;
+            label.style.marginLeft = 0f;
+            label.style.marginRight = 0f;
+            label.style.marginTop = 0f;
+            label.style.marginBottom = 0f;
+            label.style.paddingLeft = 0f;
+            label.style.paddingRight = 0f;
+            label.style.paddingTop = 0f;
+            label.style.paddingBottom = 0f;
+            return label;
         }
 
         // =====================================================================
@@ -301,7 +500,7 @@ namespace Jeomseon.Unity.SafeArea.Editor
             Canvas.ForceUpdateCanvases();
             _builtScreenSize = GetEffectiveScreenSize();
             _builtSafeArea = GetEffectiveSafeArea();
-            Repaint();
+            RefreshView();
         }
 
         private bool PreviewIsStale()
@@ -387,7 +586,10 @@ namespace Jeomseon.Unity.SafeArea.Editor
             _previewCamera.transform.rotation = Quaternion.identity;
         }
 
-        private void DrawPreview()
+        /// <summary>
+        /// 현재 유효 화면 크기로 RenderTexture를 준비하고 PreviewScene 카메라를 한 번 렌더링한다.
+        /// </summary>
+        private void RenderPreview()
         {
             if (_previewCamera == null)
                 return;
@@ -422,16 +624,32 @@ namespace Jeomseon.Unity.SafeArea.Editor
                 _previewCamera.Render();
             }
 
-            // 지금까지 그린 UI 아래의 남은 영역 전체를 프리뷰로 사용
-            Rect layoutRect = GUILayoutUtility.GetRect(
-                GUIContent.none,
-                GUIStyle.none,
-                GUILayout.ExpandWidth(true),
-                GUILayout.ExpandHeight(true)
-            );
+            if (_previewImage != null)
+            {
+                _previewImage.image = _rt;
+                _previewImage.MarkDirtyRepaint();
+            }
+        }
 
-            if (layoutRect.width <= 1f || layoutRect.height <= 1f || _rt == null)
+        /// <summary>
+        /// 프리뷰 영역(오른쪽 남은 공간 전체) 안에 화면 비율을 유지한 프리뷰 사각형을 배치하고 오버레이를 갱신한다.
+        /// </summary>
+        private void UpdatePreviewLayout()
+        {
+            if (_previewArea == null)
                 return;
+
+            Vector2 screenSize = GetEffectiveScreenSize();
+            Rect layoutRect = _previewArea.contentRect;
+
+            if (_previewCamera == null || _rt == null ||
+                float.IsNaN(layoutRect.width) || float.IsNaN(layoutRect.height) ||
+                layoutRect.width <= 1f || layoutRect.height <= 1f ||
+                screenSize.x <= 0f || screenSize.y <= 0f)
+            {
+                _previewFrame.style.display = DisplayStyle.None;
+                return;
+            }
 
             float targetAspect = screenSize.x / screenSize.y;
             float windowAspect = layoutRect.width / layoutRect.height;
@@ -457,13 +675,20 @@ namespace Jeomseon.Unity.SafeArea.Editor
                 previewRect = new Rect(x, y, width, height);
             }
 
-            if (Event.current.type == EventType.Repaint)
-            {
-                GUI.DrawTexture(previewRect, _rt, ScaleMode.StretchToFill, false);
+            _previewFrame.style.display = DisplayStyle.Flex;
+            SetElementRect(_previewFrame, previewRect);
 
-                if (_showSafeAreaOverlay)
-                    DrawSafeAreaOverlay(previewRect, screenSize, GetEffectiveSafeArea());
-            }
+            _overlayRoot.style.display = _showSafeAreaOverlay ? DisplayStyle.Flex : DisplayStyle.None;
+            if (_showSafeAreaOverlay)
+                UpdateSafeAreaOverlay(new Rect(0f, 0f, previewRect.width, previewRect.height), screenSize, GetEffectiveSafeArea());
+        }
+
+        private static void SetElementRect(VisualElement element, Rect rect)
+        {
+            element.style.left = rect.x;
+            element.style.top = rect.y;
+            element.style.width = rect.width;
+            element.style.height = rect.height;
         }
 
         private static Vector4 GetSafeAreaInsets(Vector2 screenSize, Rect safeArea)
@@ -492,58 +717,63 @@ namespace Jeomseon.Unity.SafeArea.Editor
                 previewRect.height * (yMax - yMin) / screenSize.y);
         }
 
-        private static void DrawSafeAreaOverlay(Rect previewRect, Vector2 screenSize, Rect safeArea)
+        /// <summary>
+        /// 프리뷰 사각형(프레임 로컬 좌표, 좌상단 원점) 기준으로 unsafe 영역·safe area 테두리·배지를 배치한다.
+        /// </summary>
+        private void UpdateSafeAreaOverlay(Rect previewRect, Vector2 screenSize, Rect safeArea)
         {
             var safeRect = CalculatePreviewSafeAreaRect(previewRect, screenSize, safeArea);
             var insets = GetSafeAreaInsets(screenSize, safeArea);
 
-            DrawUnsafeArea(
+            UpdateUnsafeArea(
+                0,
                 new Rect(previewRect.x, previewRect.y, previewRect.width, safeRect.y - previewRect.y),
                 $"UNSAFE TOP  {insets.z:0}px");
-            DrawUnsafeArea(
+            UpdateUnsafeArea(
+                1,
                 new Rect(previewRect.x, safeRect.yMax, previewRect.width, previewRect.yMax - safeRect.yMax),
                 $"UNSAFE BOTTOM  {insets.w:0}px");
-            DrawUnsafeArea(
+            UpdateUnsafeArea(
+                2,
                 new Rect(previewRect.x, safeRect.y, safeRect.x - previewRect.x, safeRect.height),
                 $"UNSAFE LEFT\n{insets.x:0}px");
-            DrawUnsafeArea(
+            UpdateUnsafeArea(
+                3,
                 new Rect(safeRect.xMax, safeRect.y, previewRect.xMax - safeRect.xMax, safeRect.height),
                 $"UNSAFE RIGHT\n{insets.y:0}px");
 
-            const float borderWidth = 2f;
-            EditorGUI.DrawRect(new Rect(safeRect.x, safeRect.y, safeRect.width, borderWidth), SafeAreaBorderColor);
-            EditorGUI.DrawRect(new Rect(safeRect.x, safeRect.yMax - borderWidth, safeRect.width, borderWidth), SafeAreaBorderColor);
-            EditorGUI.DrawRect(new Rect(safeRect.x, safeRect.y, borderWidth, safeRect.height), SafeAreaBorderColor);
-            EditorGUI.DrawRect(new Rect(safeRect.xMax - borderWidth, safeRect.y, borderWidth, safeRect.height), SafeAreaBorderColor);
+            SetElementRect(_safeAreaBorder, safeRect);
 
             var badgeRect = new Rect(safeRect.x + 8f, safeRect.y + 8f, 230f, 36f);
             badgeRect.width = Mathf.Min(badgeRect.width, Mathf.Max(0f, safeRect.width - 16f));
             if (badgeRect.width <= 1f)
+            {
+                _safeAreaBadge.style.display = DisplayStyle.None;
                 return;
+            }
 
-            EditorGUI.DrawRect(badgeRect, SafeAreaBadgeColor);
-            var labelRect = new Rect(badgeRect.x + 6f, badgeRect.y + 2f, badgeRect.width - 12f, badgeRect.height - 4f);
-            GUI.Label(
-                labelRect,
-                $"SAFE AREA\n{safeArea.x:0}, {safeArea.y:0}, {safeArea.width:0}, {safeArea.height:0} px",
-                EditorStyles.whiteMiniLabel);
+            _safeAreaBadge.style.display = DisplayStyle.Flex;
+            SetElementRect(_safeAreaBadge, badgeRect);
+            _safeAreaBadgeLabel.text =
+                $"SAFE AREA\n{safeArea.x:0}, {safeArea.y:0}, {safeArea.width:0}, {safeArea.height:0} px";
         }
 
-        private static void DrawUnsafeArea(Rect rect, string label)
+        private void UpdateUnsafeArea(int index, Rect rect, string label)
         {
+            var area = _unsafeAreas[index];
             if (rect.width <= 0f || rect.height <= 0f)
-                return;
-
-            EditorGUI.DrawRect(rect, UnsafeAreaOverlayColor);
-            if (rect.width < 54f || rect.height < 16f)
-                return;
-
-            var labelStyle = new GUIStyle(EditorStyles.whiteMiniLabel)
             {
-                alignment = TextAnchor.MiddleCenter,
-                wordWrap = true
-            };
-            GUI.Label(rect, label, labelStyle);
+                area.style.display = DisplayStyle.None;
+                return;
+            }
+
+            area.style.display = DisplayStyle.Flex;
+            SetElementRect(area, rect);
+
+            var areaLabel = _unsafeAreaLabels[index];
+            var showLabel = rect.width >= 54f && rect.height >= 16f;
+            areaLabel.style.display = showLabel ? DisplayStyle.Flex : DisplayStyle.None;
+            areaLabel.text = label;
         }
 
         // =====================================================================

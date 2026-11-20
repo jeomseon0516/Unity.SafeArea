@@ -1,18 +1,25 @@
 using System.Linq;
 using UnityEditor;
-using UnityEditor.IMGUI.Controls;
 using UnityEditor.SceneManagement;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UIElements;
 
 namespace Jeomseon.Unity.SafeArea.Editor
 {
     public sealed class SafeAreaPatcherWindow : EditorWindow
     {
-        [SerializeField] private TreeViewState<EntityId> treeViewState;
+        [SerializeField] private UnityEditor.IMGUI.Controls.TreeViewState<EntityId> treeViewState;
 
         private SafeAreaHierarchyTreeView _treeView;
         private Scene _scene;
+
+        private Label _sceneNameLabel;
+        private HelpBox _noSceneHelpBox;
+        private VisualElement _sceneContent;
+        private Label _pendingLabel;
+        private Button _applyButton;
 
         public static void ShowWindow()
         {
@@ -23,64 +30,104 @@ namespace Jeomseon.Unity.SafeArea.Editor
 
         private void OnEnable()
         {
-            treeViewState ??= new TreeViewState<EntityId>();
+            treeViewState ??= new UnityEditor.IMGUI.Controls.TreeViewState<EntityId>();
             _treeView = new SafeAreaHierarchyTreeView(treeViewState);
-            _treeView.StateChanged += Repaint;
+            _treeView.StateChanged += RefreshView;
             EditorApplication.hierarchyChanged += HandleHierarchyChanged;
             EditorSceneManager.activeSceneChangedInEditMode += HandleActiveSceneChanged;
+            AssemblyReloadEvents.beforeAssemblyReload += CaptureTreeViewState;
             RefreshFromScene(true);
         }
 
         private void OnDisable()
         {
+            CaptureTreeViewState();
             if (_treeView != null)
-                _treeView.StateChanged -= Repaint;
+                _treeView.StateChanged -= RefreshView;
             EditorApplication.hierarchyChanged -= HandleHierarchyChanged;
             EditorSceneManager.activeSceneChangedInEditMode -= HandleActiveSceneChanged;
+            AssemblyReloadEvents.beforeAssemblyReload -= CaptureTreeViewState;
         }
 
-        private void OnGUI()
+        private void CreateGUI()
         {
-            DrawHeader();
+            var root = rootVisualElement;
 
-            if (!_scene.IsValid() || !_scene.isLoaded)
-            {
-                EditorGUILayout.HelpBox("Open a Scene before configuring Safe Area components.", MessageType.Info);
-                return;
-            }
+            // ----- Header -----
+            var toolbar = new Toolbar();
+            _sceneNameLabel = new Label();
+            _sceneNameLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+            _sceneNameLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
+            toolbar.Add(_sceneNameLabel);
+            var toolbarSpace = new VisualElement();
+            toolbarSpace.style.flexGrow = 1f;
+            toolbar.Add(toolbarSpace);
+            toolbar.Add(new ToolbarButton(() => _treeView.ExpandAll()) { text = "Expand All" });
+            toolbar.Add(new ToolbarButton(() => _treeView.CollapseAll()) { text = "Collapse All" });
+            toolbar.Add(new ToolbarButton(() => RefreshFromScene(true)) { text = "Reset from Scene" });
+            root.Add(toolbar);
 
-            var treeRect = GUILayoutUtility.GetRect(
-                0f,
-                100000f,
-                0f,
-                100000f,
-                GUILayout.ExpandWidth(true),
-                GUILayout.ExpandHeight(true));
-            _treeView.OnGUI(treeRect);
-
-            DrawFooter();
-        }
-
-        private void DrawHeader()
-        {
-            using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
-            {
-                GUILayout.Label(_scene.IsValid() ? _scene.name : "No Active Scene", EditorStyles.boldLabel);
-                GUILayout.FlexibleSpace();
-                if (GUILayout.Button("Expand All", EditorStyles.toolbarButton))
-                    _treeView.ExpandAll();
-                if (GUILayout.Button("Collapse All", EditorStyles.toolbarButton))
-                    _treeView.CollapseAll();
-                if (GUILayout.Button("Reset from Scene", EditorStyles.toolbarButton))
-                    RefreshFromScene(true);
-            }
-
-            EditorGUILayout.HelpBox(
+            root.Add(new HelpBox(
                 "The left checkbox controls SafeArea. Runtime Ignore controls the SafeAreaIgnore marker used only by runtime patching. The Scene is not modified until Apply Changes is pressed.",
-                MessageType.Info);
+                HelpBoxMessageType.Info));
+
+            _noSceneHelpBox = new HelpBox(
+                "Open a Scene before configuring Safe Area components.",
+                HelpBoxMessageType.Info);
+            root.Add(_noSceneHelpBox);
+
+            // ----- Body -----
+            _sceneContent = new VisualElement();
+            _sceneContent.style.flexGrow = 1f;
+            _sceneContent.Add(_treeView.CreateView());
+
+            // ----- Footer -----
+            _pendingLabel = new Label();
+            _pendingLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+            _pendingLabel.style.marginTop = 4f;
+            _sceneContent.Add(_pendingLabel);
+
+            _applyButton = new Button(() =>
+            {
+                var counts = CountPendingChanges();
+                ApplyChanges(counts.Add, counts.Remove);
+            })
+            {
+                text = "Apply Changes"
+            };
+            _applyButton.style.height = 30f;
+            _sceneContent.Add(_applyButton);
+            root.Add(_sceneContent);
+
+            RefreshView();
         }
 
-        private void DrawFooter()
+        private void CaptureTreeViewState()
+        {
+            _treeView?.CaptureViewState();
+        }
+
+        private void RefreshView()
+        {
+            if (_sceneContent == null)
+                return;
+
+            _sceneNameLabel.text = _scene.IsValid() ? _scene.name : "No Active Scene";
+
+            var hasScene = _scene.IsValid() && _scene.isLoaded;
+            _noSceneHelpBox.style.display = hasScene ? DisplayStyle.None : DisplayStyle.Flex;
+            _sceneContent.style.display = hasScene ? DisplayStyle.Flex : DisplayStyle.None;
+            if (!hasScene)
+                return;
+
+            var counts = CountPendingChanges();
+            _pendingLabel.text =
+                $"Pending SafeArea: Add {counts.Add}, Remove {counts.Remove}  |  Runtime Ignore: Add {counts.AddIgnore}, Remove {counts.RemoveIgnore}  |  Invalid {counts.Excluded}";
+            _applyButton.SetEnabled(
+                counts.Add != 0 || counts.Remove != 0 || counts.AddIgnore != 0 || counts.RemoveIgnore != 0);
+        }
+
+        private (int Add, int Remove, int AddIgnore, int RemoveIgnore, int Excluded) CountPendingChanges()
         {
             var entries = _treeView.CanvasEntries.Values;
             var addCount = entries.Count(entry =>
@@ -98,18 +145,7 @@ namespace Jeomseon.Unity.SafeArea.Editor
             var removeIgnoreCount = entries.Count(entry =>
                 entry.Canvas.TryGetComponent<SafeAreaIgnore>(out _) &&
                 !_treeView.GetRuntimeIgnoreState(entry.EntityId));
-
-            EditorGUILayout.Space(4f);
-            EditorGUILayout.LabelField(
-                $"Pending SafeArea: Add {addCount}, Remove {removeCount}  |  Runtime Ignore: Add {addIgnoreCount}, Remove {removeIgnoreCount}  |  Invalid {excludedCount}",
-                EditorStyles.boldLabel);
-
-            using (new EditorGUI.DisabledScope(
-                       addCount == 0 && removeCount == 0 && addIgnoreCount == 0 && removeIgnoreCount == 0))
-            {
-                if (GUILayout.Button("Apply Changes", GUILayout.Height(30f)))
-                    ApplyChanges(addCount, removeCount);
-            }
+            return (addCount, removeCount, addIgnoreCount, removeIgnoreCount, excludedCount);
         }
 
         private void ApplyChanges(int addCount, int removeCount)
@@ -183,7 +219,7 @@ namespace Jeomseon.Unity.SafeArea.Editor
             _scene = SceneManager.GetActiveScene();
             var settings = SafeAreaSettings.Resolve();
             _treeView?.SetScene(_scene, new SafeAreaPatchValidator(settings), resetTargets);
-            Repaint();
+            RefreshView();
         }
     }
 }
