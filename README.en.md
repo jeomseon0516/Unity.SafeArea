@@ -23,7 +23,7 @@ Register the OpenUPM scoped registry once in your project's `Packages/manifest.j
     }
   ],
   "dependencies": {
-    "com.jeomseon.unity.safe-area": "0.4.0"
+    "com.jeomseon.unity.safe-area": "0.4.1"
   }
 }
 ```
@@ -33,7 +33,7 @@ Register the OpenUPM scoped registry once in your project's `Packages/manifest.j
 Enter the following URL in Unity Package Manager's `Install package from git URL`.
 
 ```text
-https://github.com/jeomseon0516/Unity.SafeArea.git#v0.4.0
+https://github.com/jeomseon0516/Unity.SafeArea.git#v0.4.1
 ```
 
 Requires Unity 6000.6.0f1 or newer and uGUI 2.6.0 or newer. RectTransform fitting uses the official

@@ -24,7 +24,7 @@
     }
   ],
   "dependencies": {
-    "com.jeomseon.unity.safe-area": "0.4.0"
+    "com.jeomseon.unity.safe-area": "0.4.1"
   }
 }
 ```
@@ -34,7 +34,7 @@
 Unity Package Manager의 `Install package from git URL`에 다음 주소를 사용합니다.
 
 ```text
-https://github.com/jeomseon0516/Unity.SafeArea.git#v0.4.0
+https://github.com/jeomseon0516/Unity.SafeArea.git#v0.4.1
 ```
 
 ## 구성
