@@ -36,7 +36,7 @@ Merge this into your project's `Packages/manifest.json`; preserve existing depen
     }
   ],
   "dependencies": {
-    "com.jeomseon.unity.safe-area": "0.4.0"
+    "com.jeomseon.unity.safe-area": "0.4.1"
   }
 }
 ```
@@ -44,7 +44,7 @@ Merge this into your project's `Packages/manifest.json`; preserve existing depen
 Or use **Install package from git URL** in Package Manager:
 
 ```text
-https://github.com/jeomseon0516/Unity.SafeArea.git#v0.4.0
+https://github.com/jeomseon0516/Unity.SafeArea.git#v0.4.1
 ```
 
 ## Samples

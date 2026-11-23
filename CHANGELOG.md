@@ -1,5 +1,9 @@
 # 변경 기록
 
+## [0.4.1] - 2026-11-23
+
+- Safe Area 패처의 계층 목록과 미리 보기 창을 UI Toolkit으로 전환했습니다.
+
 ## [0.4.0] - 2026-09-03
 
 - **(Breaking)** 자체 `SafeAreaRoot`를 제거하고 uGUI 2.6의 공식 `UnityEngine.UI.SafeArea`로

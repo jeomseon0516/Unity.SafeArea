@@ -36,7 +36,7 @@ Root는 배경 포함 박스를 줄이고 Padding은 내부 콘텐츠만 이동�
     }
   ],
   "dependencies": {
-    "com.jeomseon.unity.safe-area": "0.4.0"
+    "com.jeomseon.unity.safe-area": "0.4.1"
   }
 }
 ```
@@ -44,7 +44,7 @@ Root는 배경 포함 박스를 줄이고 Padding은 내부 콘텐츠만 이동�
 또는 Package Manager의 **Install package from git URL**을 사용합니다:
 
 ```text
-https://github.com/jeomseon0516/Unity.SafeArea.git#v0.4.0
+https://github.com/jeomseon0516/Unity.SafeArea.git#v0.4.1
 ```
 
 ## API 사용과 상세 설명
